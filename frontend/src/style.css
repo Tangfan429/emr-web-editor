@@ -1,0 +1,95 @@
+:root {
+  color: #1c2430;
+  background: #eef2f6;
+  font-family: "Microsoft YaHei UI", "Segoe UI", Arial, sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  width: 100%;
+  min-width: 320px;
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  overflow: hidden;
+}
+
+* {
+  scrollbar-color: #8aa1b7 #d7e2ec;
+  scrollbar-width: thin;
+}
+
+*::-webkit-scrollbar {
+  width: 14px;
+  height: 14px;
+}
+
+*::-webkit-scrollbar-track {
+  border: 1px solid #c7d4df;
+  background: #d7e2ec;
+}
+
+*::-webkit-scrollbar-thumb {
+  border: 3px solid #d7e2ec;
+  border-radius: 8px;
+  background: #8aa1b7;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #6f879d;
+}
+
+*::-webkit-scrollbar-corner {
+  background: #d7e2ec;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+@media print {
+  body {
+    overflow: visible;
+    background: #fff;
+  }
+
+  .app-shell__header,
+  .ribbon-header,
+  .toolbar,
+  .ribbon-toolbar,
+  .status-bar {
+    display: none !important;
+  }
+
+  .app-shell,
+  .app-shell__main,
+  .preview-panel,
+  .preview-panel__scroll {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+
+  .preview-panel__surface {
+    padding: 0 !important;
+  }
+}

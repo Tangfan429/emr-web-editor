@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<MedicalRecord>
+  <Title>演示病历记录</Title>
+  <Patient>
+    <Name>演示患者</Name>
+    <Gender>未展示</Gender>
+    <Age>45</Age>
+  </Patient>
+  <Sections>
+    <Section title="主诉">示例主诉内容，用于验证 XML 导入和预览排版。</Section>
+    <Section title="现病史">示例现病史内容已脱敏，仅保留演示字段结构。</Section>
+    <Section title="既往史">示例既往史内容已脱敏。</Section>
+    <Section title="体格检查">示例体征数据用于页面展示，不代表真实医疗记录。</Section>
+    <Section title="初步诊断">示例诊断内容已脱敏。</Section>
+  </Sections>
+</MedicalRecord>
