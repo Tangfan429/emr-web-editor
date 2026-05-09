@@ -1,5 +1,5 @@
 import { readonly, shallowRef } from 'vue'
-import type { ImportedDocument, RendererStatus } from '../types/document'
+import type { ImportedDocument } from '../types/document'
 
 interface ExternalWriterElement extends HTMLElement {
   DocumentOptions?: {
@@ -28,6 +28,8 @@ declare global {
 
 export type RendererMode = 'external' | 'preview'
 
+const rendererBootstrapPath = '/renderer/_framework/dcwriter5.js'
+
 export function useCanvasRenderer() {
   const isRendering = shallowRef(false)
   const renderError = shallowRef<string | null>(null)
@@ -39,15 +41,10 @@ export function useCanvasRenderer() {
     container.replaceChildren()
 
     try {
-      const status = await getRendererStatus()
-      if (status.ready) {
-        const rendered = await tryExternalRenderer(container, document)
-        if (rendered) {
-          mode.value = 'external'
-          return
-        }
-      } else if (status.missingAssets.length > 0) {
-        renderError.value = `渲染资源不完整：${status.missingAssets.join(', ')}。`
+      const rendered = await tryExternalRenderer(container, document)
+      if (rendered) {
+        mode.value = 'external'
+        return
       }
 
       mode.value = 'preview'
@@ -77,17 +74,8 @@ export function useCanvasRenderer() {
   }
 }
 
-async function getRendererStatus(): Promise<RendererStatus> {
-  const response = await fetch('/api/renderer/status')
-  if (!response.ok) {
-    throw new Error('无法读取渲染资源状态。')
-  }
-
-  return (await response.json()) as RendererStatus
-}
-
 async function tryExternalRenderer(container: HTMLElement, importedDocument: ImportedDocument): Promise<boolean> {
-  await loadExternalBootstrap()
+  await preloadExternalRenderer()
   await waitForExternalStart()
 
   const editorElement = document.createElement('div') as ExternalWriterElement
@@ -154,7 +142,7 @@ function hideHeaderBottomLine(editorElement: ExternalWriterElement) {
   }
 }
 
-async function loadExternalBootstrap() {
+export async function preloadExternalRenderer() {
   if (window.__medicalRecordRendererLoading) {
     return window.__medicalRecordRendererLoading
   }
@@ -166,8 +154,7 @@ async function loadExternalBootstrap() {
     }
 
     const script = document.createElement('script')
-    const bootstrapFileName = ['d', 'c', 'writer5.js'].join('')
-    script.src = `/renderer/_framework/${bootstrapFileName}`
+    script.src = rendererBootstrapPath
     script.async = true
     script.onload = () => {
       waitForExternalStart().then(resolve)

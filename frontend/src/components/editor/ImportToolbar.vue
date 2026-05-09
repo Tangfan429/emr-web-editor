@@ -23,10 +23,6 @@ interface ToolbarResponse {
   toolBars: ToolbarTab[]
 }
 
-interface ToolbarIconsResponse {
-  source: string
-}
-
 interface ToolbarTab {
   id: string
   title: string
@@ -143,7 +139,7 @@ function handleFileChange(event: Event) {
 
 async function loadToolbarDescription() {
   try {
-    const response = await fetch('/api/renderer/toolbar')
+    const response = await fetch('/renderer/toolboxdescription.json')
     if (!response.ok) {
       return null
     }
@@ -156,16 +152,20 @@ async function loadToolbarDescription() {
 
 async function loadSvgDictionary() {
   try {
-    const response = await fetch('/api/renderer/toolbar-icons')
+    const response = await fetch('/renderer/js/DCWriterLife.js')
     if (!response.ok) {
       return null
     }
 
-    const payload = await response.json() as ToolbarIconsResponse
-    return parseSvgDictionaryLiteral(payload.source)
+    return parseSvgDictionaryScript(await response.text())
   } catch {
     return null
   }
+}
+
+function parseSvgDictionaryScript(source: string) {
+  const literal = extractAssignedObjectLiteral(source, 'SVG_Dictionary')
+  return literal ? parseSvgDictionaryLiteral(literal) : null
 }
 
 function parseSvgDictionaryLiteral(source: string) {
@@ -178,6 +178,51 @@ function parseSvgDictionaryLiteral(source: string) {
   } catch {
     return null
   }
+}
+
+function extractAssignedObjectLiteral(source: string, variableName: string) {
+  const markerIndex = source.indexOf(variableName)
+  if (markerIndex < 0) {
+    return null
+  }
+
+  const start = source.indexOf('{', markerIndex)
+  if (start < 0) {
+    return null
+  }
+
+  let depth = 0
+  let inString: string | null = null
+  let escaping = false
+  for (let index = start; index < source.length; index += 1) {
+    const current = source[index]
+    if (inString) {
+      if (escaping) {
+        escaping = false
+      } else if (current === '\\') {
+        escaping = true
+      } else if (current === inString) {
+        inString = null
+      }
+      continue
+    }
+
+    if (current === '"' || current === '\'' || current === '`') {
+      inString = current
+      continue
+    }
+
+    if (current === '{') {
+      depth += 1
+    } else if (current === '}') {
+      depth -= 1
+      if (depth === 0) {
+        return source.slice(start, index + 1)
+      }
+    }
+  }
+
+  return null
 }
 
 function selectTab(tabId: string) {

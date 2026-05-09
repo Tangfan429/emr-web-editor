@@ -35,3 +35,4 @@ frontend/*-run.err.log
 .DS_Store
 .tmp*/
 .playwright-mcp/
+frontend/pnpm-lock.yaml
