@@ -2,13 +2,23 @@
 import { computed, shallowRef } from 'vue'
 import CanvasPreview from './CanvasPreview.vue'
 import ImportToolbar from './ImportToolbar.vue'
+import type { ExternalWriterElement } from '../../composables/useCanvasRenderer'
 import { useDocumentImport } from '../../composables/useDocumentImport'
+import {
+  closeWriterPrintPreview,
+  printWriterDocument,
+  showWriterPrintPreview,
+  type WriterPrintResult,
+} from '../../utils/writerPrint'
 
 const { document, error, isImporting, importFile, clearDocument } = useDocumentImport()
 
 const zoom = shallowRef(1)
 const rendererMode = shallowRef('preview')
 const rendererError = shallowRef<string | null>(null)
+const printMessage = shallowRef<string | null>(null)
+const writerElement = shallowRef<ExternalWriterElement | null>(null)
+const isPrintPreviewing = shallowRef(false)
 const activeToolbarTab = shallowRef('ToolbarStart')
 
 const statusText = computed(() => {
@@ -26,6 +36,14 @@ const statusText = computed(() => {
 
   if (rendererError.value) {
     return rendererError.value
+  }
+
+  if (printMessage.value) {
+    return printMessage.value
+  }
+
+  if (isPrintPreviewing.value) {
+    return '已进入打印预览'
   }
 
   return rendererMode.value === 'external' ? '已启用外部 Canvas 渲染' : '已生成结构化 Canvas 预览'
@@ -46,11 +64,40 @@ function resetZoom() {
 }
 
 function printDocument() {
-  window.print()
+  applyPrintResult(printWriterDocument(writerElement.value))
+}
+
+function openPrintPreview() {
+  const result = showWriterPrintPreview(writerElement.value)
+  applyPrintResult(result)
+  if (result.ok) {
+    isPrintPreviewing.value = true
+  }
+}
+
+function closePrintPreview() {
+  const result = closeWriterPrintPreview(writerElement.value)
+  applyPrintResult(result)
+  if (result.ok) {
+    isPrintPreviewing.value = false
+  }
+}
+
+function updateWriterElement(element: ExternalWriterElement | null) {
+  writerElement.value = element
+  isPrintPreviewing.value = false
+  printMessage.value = null
+}
+
+function applyPrintResult(result: WriterPrintResult) {
+  printMessage.value = result.ok ? null : result.message
 }
 
 function clear() {
   clearDocument()
+  writerElement.value = null
+  isPrintPreviewing.value = false
+  printMessage.value = null
   rendererError.value = null
 }
 
@@ -87,6 +134,8 @@ function selectToolbarTab(tabId: string) {
     <ImportToolbar
       :is-importing="isImporting"
       :can-print="Boolean(document)"
+      :can-use-writer-print="Boolean(writerElement)"
+      :is-print-previewing="isPrintPreviewing"
       :zoom="zoom"
       :file-name="document?.fileName"
       :active-tab-id="activeToolbarTab"
@@ -95,6 +144,8 @@ function selectToolbarTab(tabId: string) {
       @zoom-out="zoomOut"
       @reset-zoom="resetZoom"
       @print="printDocument"
+      @print-preview="openPrintPreview"
+      @close-print-preview="closePrintPreview"
       @clear="clear"
       @tab-change="selectToolbarTab"
     />
@@ -105,6 +156,7 @@ function selectToolbarTab(tabId: string) {
         :zoom="zoom"
         @mode-change="rendererMode = $event"
         @render-error="rendererError = $event"
+        @writer-ready="updateWriterElement"
       />
     </main>
 

@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { computed, onMounted, shallowRef } from 'vue'
+import { FileSearch, Printer, X } from 'lucide-vue-next'
 
 interface Props {
   isImporting: boolean
   canPrint: boolean
+  canUseWriterPrint: boolean
+  isPrintPreviewing: boolean
   zoom: number
   fileName?: string
   activeTabId: string
@@ -15,6 +18,8 @@ interface Emits {
   zoomOut: []
   resetZoom: []
   print: []
+  printPreview: []
+  closePrintPreview: []
   clear: []
   tabChange: [tabId: string]
 }
@@ -60,14 +65,10 @@ const hiddenToolbarGroupNames = new Set(['Clipboard', 'Convention', 'Font', 'Par
 const hiddenToolbarCommandNames = new Set([
   'SavePdf',
   'SaveXml',
-  'Print',
-  'PrintPreview',
 ])
 const hiddenToolbarItemIds = new Set([
   'btnSavePdf',
   'btnSaveXml',
-  'btnPrint',
-  'btnPrintPreview',
 ])
 
 const fallbackTabs = computed<ToolbarTab[]>(() => [
@@ -79,6 +80,8 @@ const fallbackTabs = computed<ToolbarTab[]>(() => [
         text: 'File',
         childItems: [
           { type: 'button', id: 'btnOpen', text: 'Open', icon: 'Open', commandName: 'fileopen', childItems: [] },
+          { type: 'button', id: 'btnPrint', text: 'Print', icon: 'Print', commandName: 'Print', childItems: [] },
+          { type: 'button', id: 'btnPrintPreview', text: 'PrintPreview', icon: 'PrintPreview', commandName: 'PrintPreview', childItems: [] },
           { type: 'button', id: 'btnSaveXml', text: 'SaveXml', icon: 'SaveXml', commandName: '', childItems: [] },
           { type: 'button', id: 'btnSavePdf', text: 'Save Pdf', icon: 'SavePdf', commandName: '', childItems: [] },
         ],
@@ -114,6 +117,16 @@ const visibleTabs = computed(() => {
 })
 const currentTabId = computed(() => props.activeTabId || activeTabId.value)
 const activeTab = computed(() => visibleTabs.value.find((tab) => tab.id === currentTabId.value) || visibleTabs.value[0])
+const printButtonTitle = computed(() => (
+  props.canUseWriterPrint
+    ? '打印'
+    : '外部渲染加载成功后可打印'
+))
+const printPreviewButtonTitle = computed(() => (
+  props.canUseWriterPrint
+    ? '打印预览'
+    : '外部渲染加载成功后可预览'
+))
 
 onMounted(async () => {
   const [description, icons] = await Promise.all([loadToolbarDescription(), loadSvgDictionary()])
@@ -246,8 +259,12 @@ function commandForItem(item: ToolbarItem) {
     return 'import'
   }
 
-  if (item.commandName === 'Print' || item.commandName === 'PrintPreview' || item.id === 'btnPrintPreview') {
+  if (item.commandName === 'Print' || item.id === 'btnPrint') {
     return 'print'
+  }
+
+  if (item.commandName === 'PrintPreview' || item.id === 'btnPrintPreview') {
+    return props.isPrintPreviewing ? 'closePrintPreview' : 'printPreview'
   }
 
   return ''
@@ -275,22 +292,44 @@ function shouldShowToolbarItem(item: ToolbarItem) {
     return false
   }
 
-  return commandForItem(item) === 'import'
+  return commandForItem(item) !== ''
 }
 
 function runToolbarItem(item: ToolbarItem) {
   const command = commandForItem(item)
   if (command === 'print' && props.canPrint) {
     emit('print')
+  } else if (command === 'printPreview' && props.canPrint && props.canUseWriterPrint) {
+    emit('printPreview')
+  } else if (command === 'closePrintPreview' && props.canUseWriterPrint) {
+    emit('closePrintPreview')
   }
 }
 
 function itemHtml(item: ToolbarItem) {
   const icon = svgDictionary.value[item.icon] || item.icon || ''
   const shouldShowLabel = activeTab.value?.title === 'Insert' || activeTab.value?.title === 'Table' || activeTab.value?.title === 'Print'
-  const label = shouldShowLabel && item.text ? `<span class="${escapeAttribute(item.id)}">${escapeHtml(item.text)}</span>` : ''
+  const itemText = commandForItem(item) === 'closePrintPreview' ? '关闭预览' : item.text
+  const label = shouldShowLabel && itemText ? `<span class="${escapeAttribute(item.id)}">${escapeHtml(itemText)}</span>` : ''
   const dropdown = item.type === 'dropdownList' ? svgDictionary.value.dropDownIcon || '' : ''
   return `${icon}${dropdown}${label}`
+}
+
+function isToolbarItemDisabled(item: ToolbarItem) {
+  const command = commandForItem(item)
+  if (command === 'import') {
+    return props.isImporting
+  }
+
+  if (command === 'print') {
+    return !props.canPrint || !props.canUseWriterPrint
+  }
+
+  if (command === 'printPreview' || command === 'closePrintPreview') {
+    return !props.canPrint || !props.canUseWriterPrint
+  }
+
+  return true
 }
 
 function escapeHtml(value: string) {
@@ -351,7 +390,7 @@ function escapeAttribute(value: string) {
                     :id="item.id"
                     :title="item.text"
                     type="button"
-                    :disabled="commandForItem(item) === 'print' && !props.canPrint"
+                    :disabled="isToolbarItemDisabled(item)"
                     @click="runToolbarItem(item)"
                     v-html="itemHtml(item)"
                   ></button>
@@ -390,6 +429,37 @@ function escapeAttribute(value: string) {
 
         <div class="ribbon-toolbar__document" :title="props.fileName || '未导入文档'">
           <span>{{ props.fileName || '未导入文档' }}</span>
+        </div>
+        <div class="ribbon-toolbar__print-actions" aria-label="打印操作">
+          <button
+            class="print-action-btn"
+            type="button"
+            :title="printButtonTitle"
+            :disabled="!props.canPrint || !props.canUseWriterPrint"
+            @click="emit('print')"
+          >
+            <Printer :size="17" aria-hidden="true" />
+          </button>
+          <button
+            v-if="!props.isPrintPreviewing"
+            class="print-action-btn"
+            type="button"
+            :title="printPreviewButtonTitle"
+            :disabled="!props.canPrint || !props.canUseWriterPrint"
+            @click="emit('printPreview')"
+          >
+            <FileSearch :size="17" aria-hidden="true" />
+          </button>
+          <button
+            v-else
+            class="print-action-btn"
+            type="button"
+            title="关闭打印预览"
+            :disabled="!props.canUseWriterPrint"
+            @click="emit('closePrintPreview')"
+          >
+            <X :size="17" aria-hidden="true" />
+          </button>
         </div>
       </div>
     </div>
@@ -566,6 +636,39 @@ function escapeAttribute(value: string) {
 .ribbon-toolbar__document span {
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.ribbon-toolbar__print-actions {
+  display: inline-flex;
+  height: 28px;
+  align-items: center;
+  align-self: flex-start;
+  gap: 4px;
+  margin-left: 10px;
+}
+
+.print-action-btn {
+  display: inline-flex;
+  width: 30px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid #c7c7c7;
+  border-radius: 4px;
+  background: #fff;
+  color: #333;
+  cursor: pointer;
+}
+
+.print-action-btn:hover:not(:disabled) {
+  border-color: #9f9f9f;
+  background: #e8f1fb;
+}
+
+.print-action-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
 }
 
 .ribbon-groupFile .group-controls,

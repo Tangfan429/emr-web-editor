@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed, nextTick, useTemplateRef, watch } from 'vue'
 import { useCanvasRenderer } from '../../composables/useCanvasRenderer'
+import type { ExternalWriterElement } from '../../composables/useCanvasRenderer'
 import type { ImportedDocument } from '../../types/document'
+import { getCanvasLayerStyle, getSurfaceStyle } from './canvasPreviewLayout'
 
 interface Props {
   document: ImportedDocument | null
@@ -11,25 +13,18 @@ interface Props {
 interface Emits {
   modeChange: [mode: string]
   renderError: [message: string | null]
+  writerReady: [writerElement: ExternalWriterElement | null]
 }
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 const hostRef = useTemplateRef<HTMLDivElement>('host')
-const { isRendering, renderError, mode, renderDocument, clear } = useCanvasRenderer()
+const { isRendering, renderError, mode, writerElement, renderDocument, clear } = useCanvasRenderer()
 
-const basePageWidth = 795.333
-const basePageHeight = 1123.333
-
-const surfaceStyle = computed(() => ({
-  width: `min(${Math.round(basePageWidth * props.zoom)}px, 100%)`,
-  minHeight: `${Math.round(basePageHeight * props.zoom)}px`,
-}))
-
-const canvasLayerStyle = computed(() => ({
-  transform: `scale(${props.zoom})`,
-}))
+const isExternalMode = computed(() => mode.value === 'external')
+const surfaceStyle = computed(() => getSurfaceStyle(mode.value, props.zoom))
+const canvasLayerStyle = computed(() => getCanvasLayerStyle(mode.value, props.zoom))
 
 watch(
   () => props.document,
@@ -52,6 +47,7 @@ watch(
 
 watch(mode, (value) => emit('modeChange', value), { immediate: true })
 watch(renderError, (value) => emit('renderError', value), { immediate: true })
+watch(writerElement, (value) => emit('writerReady', value), { immediate: true })
 </script>
 
 <template>
@@ -61,9 +57,18 @@ watch(renderError, (value) => emit('renderError', value), { immediate: true })
         <div class="preview-panel__empty-title">等待导入 XML</div>
         <div class="preview-panel__empty-text">导入后将在此区域展示 Canvas 预览。</div>
       </div>
-      <div v-else class="preview-panel__surface" :style="surfaceStyle">
-        <div class="preview-panel__canvas-layer" :style="canvasLayerStyle">
-          <div ref="host" class="preview-panel__host"></div>
+      <div
+        v-else
+        class="preview-panel__surface"
+        :class="{ 'preview-panel__surface--external': isExternalMode }"
+        :style="surfaceStyle"
+      >
+        <div
+          class="preview-panel__canvas-layer"
+          :class="{ 'preview-panel__canvas-layer--external': isExternalMode }"
+          :style="canvasLayerStyle"
+        >
+          <div ref="host" class="preview-panel__host" :class="{ 'preview-panel__host--external': isExternalMode }"></div>
         </div>
         <div v-if="isRendering" class="preview-panel__loading">渲染中...</div>
       </div>
@@ -124,9 +129,20 @@ watch(renderError, (value) => emit('renderError', value), { immediate: true })
   transform-origin: top center;
 }
 
+.preview-panel__canvas-layer--external {
+  width: max-content;
+  min-width: max-content;
+  transform-origin: top center;
+}
+
 .preview-panel__host {
   width: 795.333px;
   min-height: 1123.333px;
+}
+
+.preview-panel__host--external {
+  width: max-content;
+  min-width: max-content;
 }
 
 .preview-panel__host :deep(.preview-canvas) {
@@ -137,8 +153,8 @@ watch(renderError, (value) => emit('renderError', value), { immediate: true })
 }
 
 .preview-panel__host :deep(.external-renderer-host) {
-  width: 795.333px;
-  min-width: 795.333px;
+  width: max-content !important;
+  min-width: max-content !important;
   min-height: 1123.333px;
   background: #fff;
   outline: 1px solid #aeb8c2;
@@ -146,7 +162,9 @@ watch(renderError, (value) => emit('renderError', value), { immediate: true })
 }
 
 .preview-panel__host :deep(.external-renderer-host [dctype="page-container"]) {
-  overflow-x: hidden !important;
+  width: max-content !important;
+  min-width: max-content !important;
+  overflow: visible !important;
 }
 
 .preview-panel__empty {

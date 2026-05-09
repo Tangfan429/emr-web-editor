@@ -1,7 +1,9 @@
 import { readonly, shallowRef } from 'vue'
+import type { ShallowRef } from 'vue'
 import type { ImportedDocument } from '../types/document'
+import type { WriterPrintTarget } from '../utils/writerPrint'
 
-interface ExternalWriterElement extends HTMLElement {
+export interface ExternalWriterElement extends HTMLElement, WriterPrintTarget {
   DocumentOptions?: {
     ViewOptions?: {
       ShowHeaderBottomLine?: boolean
@@ -34,24 +36,29 @@ export function useCanvasRenderer() {
   const isRendering = shallowRef(false)
   const renderError = shallowRef<string | null>(null)
   const mode = shallowRef<RendererMode>('preview')
+  const writerElement = shallowRef<ExternalWriterElement | null>(null)
 
   async function renderDocument(container: HTMLElement, document: ImportedDocument) {
     isRendering.value = true
     renderError.value = null
+    writerElement.value = null
     container.replaceChildren()
 
     try {
       const rendered = await tryExternalRenderer(container, document)
       if (rendered) {
         mode.value = 'external'
+        writerElement.value = rendered
         return
       }
 
       mode.value = 'preview'
+      writerElement.value = null
       container.replaceChildren()
       renderPreviewCanvas(container, document)
     } catch (error) {
       mode.value = 'preview'
+      writerElement.value = null
       container.replaceChildren()
       renderPreviewCanvas(container, document)
       renderError.value = error instanceof Error ? error.message : '渲染资源加载失败，已切换到预览模式。'
@@ -62,6 +69,7 @@ export function useCanvasRenderer() {
 
   function clear(container: HTMLElement | null) {
     container?.replaceChildren()
+    writerElement.value = null
     renderError.value = null
   }
 
@@ -69,12 +77,13 @@ export function useCanvasRenderer() {
     isRendering: readonly(isRendering),
     renderError: readonly(renderError),
     mode: readonly(mode),
+    writerElement: writerElement as Readonly<ShallowRef<ExternalWriterElement | null>>,
     renderDocument,
     clear,
   }
 }
 
-async function tryExternalRenderer(container: HTMLElement, importedDocument: ImportedDocument): Promise<boolean> {
+async function tryExternalRenderer(container: HTMLElement, importedDocument: ImportedDocument): Promise<ExternalWriterElement | null> {
   await preloadExternalRenderer()
   await waitForExternalStart()
 
@@ -100,7 +109,7 @@ async function tryExternalRenderer(container: HTMLElement, importedDocument: Imp
 
   if (!window.CreateWriterControlForWASM) {
     container.replaceChildren()
-    return false
+    return null
   }
 
   window.CreateWriterControlForWASM(editorElement)
@@ -109,7 +118,7 @@ async function tryExternalRenderer(container: HTMLElement, importedDocument: Imp
 
   if (!editorElement.LoadDocumentFromString) {
     container.replaceChildren()
-    return false
+    return null
   }
 
   let hasLoadError = false
@@ -119,7 +128,7 @@ async function tryExternalRenderer(container: HTMLElement, importedDocument: Imp
 
   if (loadResult === false || hasLoadError) {
     container.replaceChildren()
-    return false
+    return null
   }
 
   hideHeaderBottomLine(editorElement)
@@ -130,10 +139,10 @@ async function tryExternalRenderer(container: HTMLElement, importedDocument: Imp
   const canvasReady = await waitForExternalCanvas(editorElement)
   if (!canvasReady) {
     container.replaceChildren()
-    return false
+    return null
   }
 
-  return true
+  return editorElement
 }
 
 function hideHeaderBottomLine(editorElement: ExternalWriterElement) {
