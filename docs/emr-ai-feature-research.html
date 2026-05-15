@@ -1,0 +1,1062 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>文书系统 AI 功能方向调研与开发引导</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f9fc;
+      --panel: #ffffff;
+      --panel-2: #f1f5f9;
+      --ink: #1e293b;
+      --muted: #64748b;
+      --line: #d9e2ec;
+      --brand: #1f6feb;
+      --brand-2: #0f766e;
+      --warn: #b45309;
+      --risk: #be123c;
+      --ok: #15803d;
+      --shadow: 0 18px 42px rgba(15, 23, 42, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Microsoft YaHei UI", "Segoe UI", Arial, sans-serif;
+      line-height: 1.65;
+    }
+
+    a {
+      color: var(--brand);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 268px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      padding: 28px 20px;
+      overflow-y: auto;
+      border-right: 1px solid var(--line);
+      background: #ffffff;
+    }
+
+    .sidebar h1 {
+      margin: 0 0 10px;
+      font-size: 20px;
+      line-height: 1.3;
+    }
+
+    .sidebar .meta {
+      margin: 0 0 22px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .nav {
+      display: grid;
+      gap: 6px;
+    }
+
+    .nav a {
+      display: block;
+      padding: 8px 10px;
+      border-radius: 8px;
+      color: #334155;
+      font-size: 14px;
+    }
+
+    .nav a:hover,
+    .nav a.active {
+      background: #eaf2ff;
+      color: #0f4fb8;
+      text-decoration: none;
+    }
+
+    main {
+      min-width: 0;
+      padding: 34px 40px 64px;
+    }
+
+    .hero {
+      display: grid;
+      gap: 18px;
+      max-width: 1180px;
+      padding: 30px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .hero h2 {
+      margin: 0;
+      font-size: 30px;
+      line-height: 1.25;
+    }
+
+    .hero p {
+      max-width: 960px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .hero-grid,
+    .two-col,
+    .three-col {
+      display: grid;
+      gap: 16px;
+    }
+
+    .hero-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .two-col {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .three-col {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .metric,
+    .card,
+    .source-card,
+    .risk-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .metric {
+      padding: 14px;
+    }
+
+    .metric strong {
+      display: block;
+      color: var(--brand);
+      font-size: 24px;
+      line-height: 1.2;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    section {
+      max-width: 1180px;
+      margin-top: 28px;
+      scroll-margin-top: 18px;
+    }
+
+    section h2 {
+      margin: 0 0 14px;
+      font-size: 24px;
+      line-height: 1.3;
+    }
+
+    section h3 {
+      margin: 0 0 10px;
+      font-size: 18px;
+    }
+
+    .section-lead {
+      max-width: 980px;
+      margin: 0 0 16px;
+      color: var(--muted);
+    }
+
+    .card {
+      padding: 18px;
+    }
+
+    .card p,
+    .source-card p,
+    .risk-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #e2e8f0;
+      color: #334155;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .tag.ok {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .tag.warn {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .tag.risk {
+      background: #ffe4e6;
+      color: #be123c;
+    }
+
+    .tag.info {
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+
+    .tagrow {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    table {
+      width: 100%;
+      min-width: 860px;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+      font-size: 14px;
+    }
+
+    th {
+      background: #f8fafc;
+      color: #334155;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .filter-btn {
+      min-height: 34px;
+      padding: 6px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: #334155;
+      cursor: pointer;
+      font: inherit;
+      font-size: 14px;
+    }
+
+    .filter-btn.active {
+      border-color: #8bb9ff;
+      background: #eaf2ff;
+      color: #0f4fb8;
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .feature {
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .feature[hidden] {
+      display: none;
+    }
+
+    .feature h3 {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 0 0 8px;
+      font-size: 17px;
+    }
+
+    .feature ul,
+    .card ul,
+    .risk-card ul {
+      margin: 10px 0 0;
+      padding-left: 20px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .timeline {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .phase {
+      position: relative;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+    }
+
+    .phase .num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      margin-bottom: 10px;
+      border-radius: 50%;
+      background: #eaf2ff;
+      color: #0f4fb8;
+      font-weight: 700;
+    }
+
+    .source-card {
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .source-card summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .source-card summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .source-card .source-body {
+      padding: 0 16px 16px;
+      border-top: 1px solid var(--line);
+    }
+
+    .source-card ul {
+      margin: 10px 0 0;
+      padding-left: 20px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .svg-panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      overflow: hidden;
+    }
+
+    .svg-panel svg {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .code {
+      overflow-x: auto;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #0f172a;
+      color: #dbeafe;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .note {
+      padding: 14px 16px;
+      border-left: 4px solid var(--brand);
+      border-radius: 8px;
+      background: #eef6ff;
+      color: #334155;
+    }
+
+    .warning {
+      border-left-color: var(--warn);
+      background: #fff7ed;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    @media (max-width: 960px) {
+      .layout {
+        display: block;
+      }
+
+      .sidebar {
+        position: static;
+        height: auto;
+      }
+
+      main {
+        padding: 24px 18px 48px;
+      }
+
+      .hero-grid,
+      .two-col,
+      .three-col,
+      .feature-grid,
+      .timeline {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <h1>文书系统 AI 功能方向</h1>
+      <p class="meta">调研日期：2026-05-15<br>项目：D:\DCWriterLite\worktrees\emr-ai-quality</p>
+      <nav class="nav" aria-label="页内导航">
+        <a href="#summary">结论摘要</a>
+        <a href="#market">市场共识</a>
+        <a href="#evidence">权威资料</a>
+        <a href="#features">功能整理</a>
+        <a href="#roadmap">开发路线</a>
+        <a href="#architecture">工程落点</a>
+        <a href="#risk">安全合规</a>
+        <a href="#sources">资料来源</a>
+      </nav>
+    </aside>
+
+    <main>
+      <header class="hero" id="summary">
+        <div>
+          <h2>建议先把 AI 做成“文书质控 + 摘要问答 + 草稿助手”，再逐步扩展到 HIS/EMR 全量临床智能。</h2>
+          <p>
+            市面大型 EHR/HIS 的 AI 方向正在收敛：环境语音生成病历、基于 EHR 的图表回顾与问答、病历摘要、医嘱/随访建议、消息与患者沟通、文书质量控制、编码和运营辅助。
+            结合当前项目现状，第一阶段更适合围绕本地 XML 文书、DCWriter 渲染和打印归档流程做低风险闭环，不宜直接做诊断或医嘱自动执行。
+          </p>
+        </div>
+        <div class="hero-grid" aria-label="关键判断">
+          <div class="metric">
+            <strong>P1</strong>
+            <span>最先落地：文书摘要、质控、问答、打印前检查</span>
+          </div>
+          <div class="metric">
+            <strong>P2</strong>
+            <span>接入 HIS/FHIR 后：纵向病程摘要、CDSS、随访和编码</span>
+          </div>
+          <div class="metric">
+            <strong>P3</strong>
+            <span>需要治理成熟：环境语音、医嘱建议、风险预测</span>
+          </div>
+          <div class="metric">
+            <strong>0</strong>
+            <span>第一阶段不建议自动写回正式病历或自动下医嘱</span>
+          </div>
+        </div>
+        <div class="note">
+          当前仓库的能力边界是：XML 导入与脱敏、结构化/外部 Canvas 渲染、工具栏、打印和打印预览。AI 应作为“旁路助手”读取脱敏文书并返回建议，必须由医生确认后才进入文书。
+        </div>
+      </header>
+
+      <section id="market">
+        <h2>市场共识</h2>
+        <p class="section-lead">
+          从 Epic、Microsoft、Oracle、AWS、Google、MEDITECH、athenahealth 及国内电子病历厂商公开资料看，AI 不再是单点聊天机器人，而是嵌入电子病历工作流的“临床工作台能力”。
+        </p>
+        <div class="svg-panel" aria-label="市场功能雷达图">
+          <svg viewBox="0 0 960 390" role="img" aria-label="AI 功能成熟度与开发优先级图">
+            <defs>
+              <linearGradient id="axisFill" x1="0" x2="1">
+                <stop offset="0" stop-color="#e0f2fe"></stop>
+                <stop offset="1" stop-color="#dcfce7"></stop>
+              </linearGradient>
+              <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#0f172a" flood-opacity="0.12"></feDropShadow>
+              </filter>
+            </defs>
+            <rect x="0" y="0" width="960" height="390" fill="#fff"></rect>
+            <rect x="70" y="42" width="780" height="278" rx="8" fill="url(#axisFill)" opacity="0.58"></rect>
+            <line x1="100" y1="290" x2="820" y2="290" stroke="#64748b" stroke-width="2"></line>
+            <line x1="100" y1="290" x2="100" y2="70" stroke="#64748b" stroke-width="2"></line>
+            <text x="816" y="314" fill="#334155" font-size="14">开发复杂度高</text>
+            <text x="70" y="66" fill="#334155" font-size="14">临床价值高</text>
+            <text x="88" y="314" fill="#64748b" font-size="12">低复杂度</text>
+            <text x="46" y="292" fill="#64748b" font-size="12">低价值</text>
+
+            <g filter="url(#softShadow)">
+              <circle cx="210" cy="128" r="34" fill="#1f6feb"></circle>
+              <text x="210" y="123" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">质控</text>
+              <text x="210" y="141" text-anchor="middle" fill="#dbeafe" font-size="11">P1</text>
+
+              <circle cx="292" cy="160" r="34" fill="#0f766e"></circle>
+              <text x="292" y="156" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">摘要</text>
+              <text x="292" y="174" text-anchor="middle" fill="#ccfbf1" font-size="11">P1</text>
+
+              <circle cx="370" cy="206" r="34" fill="#0f766e"></circle>
+              <text x="370" y="202" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">问答</text>
+              <text x="370" y="220" text-anchor="middle" fill="#ccfbf1" font-size="11">P1</text>
+
+              <circle cx="468" cy="144" r="34" fill="#7c3aed"></circle>
+              <text x="468" y="140" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">草稿</text>
+              <text x="468" y="158" text-anchor="middle" fill="#ede9fe" font-size="11">P1/P2</text>
+
+              <circle cx="566" cy="116" r="38" fill="#b45309"></circle>
+              <text x="566" y="112" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">语音病历</text>
+              <text x="566" y="130" text-anchor="middle" fill="#ffedd5" font-size="11">P3</text>
+
+              <circle cx="664" cy="152" r="38" fill="#be123c"></circle>
+              <text x="664" y="148" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">医嘱建议</text>
+              <text x="664" y="166" text-anchor="middle" fill="#ffe4e6" font-size="11">高风险</text>
+
+              <circle cx="728" cy="214" r="34" fill="#475569"></circle>
+              <text x="728" y="210" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">预测</text>
+              <text x="728" y="228" text-anchor="middle" fill="#e2e8f0" font-size="11">P3</text>
+            </g>
+
+            <text x="160" y="350" fill="#475569" font-size="13">推荐落点：先做左侧高价值、低风险的文书能力，再进入语音、医嘱和预测类临床决策支持。</text>
+          </svg>
+        </div>
+      </section>
+
+      <section id="evidence">
+        <h2>权威资料</h2>
+        <p class="section-lead">
+          以下资料按“市场产品、标准监管、论文证据”分组。结论重点不是复制厂商功能，而是抽象出可迁移到文书系统的能力单元。
+        </p>
+        <div class="three-col">
+          <details class="source-card" open>
+            <summary>大型 EHR/HIS 厂商 <span class="tag info">产品趋势</span></summary>
+            <div class="source-body">
+              <ul>
+                <li><a href="https://www.epic.com/epic/post/epic-ai-charting-rolls-out-alongside-an-expanding-set-of-built-in-ai-capabilities">Epic AI Charting</a>：内置到 EHR，基于就诊对话生成病历草稿，并可排队生成相关医嘱建议。</li>
+                <li><a href="https://learn.microsoft.com/en-us/industry/healthcare/dragon-copilot/about/">Microsoft Dragon Copilot</a>：覆盖环境对话采集、临床文档草稿、离散临床数据建议。</li>
+                <li><a href="https://www.oracle.com/health/clinical-suite/clinical-ai-agent/">Oracle Health Clinical AI Agent</a>：语音驱动，嵌入 Oracle Health EHR，面向文档、用药、医嘱和护理协同。</li>
+                <li><a href="https://ehr.meditech.com/ehr-solutions/expanse-for-physicians">MEDITECH Expanse</a>：环境听写、跨结构化和非结构化数据搜索、摘要、问答、生成转诊信。</li>
+              </ul>
+            </div>
+          </details>
+
+          <details class="source-card" open>
+            <summary>云厂商与平台能力 <span class="tag info">基础设施</span></summary>
+            <div class="source-body">
+              <ul>
+                <li><a href="https://aws.amazon.com/healthscribe/">AWS HealthScribe</a>：面向医疗软件厂商的临床文档生成服务，组合语音识别和生成式 AI。</li>
+                <li><a href="https://cloud.google.com/vertex-ai/generative-ai/docs/medlm/medlm-prompts">Google MedLM 提示示例</a>：展示从医患对话生成 H&amp;P 草稿，但强调输出需人工审阅。</li>
+                <li><a href="https://cloud.google.com/generative-ai-app-builder/docs/search-hc-data">Vertex AI Search for Healthcare</a>：定位为检索和总结既有医疗信息，不应脱离持证人员审阅用于直接诊疗。</li>
+                <li><a href="https://www.athenahealth.com/solutions/ambient-notes">athenahealth Ambient Notes</a>：嵌入移动 EHR，就诊录音后生成摘要并放回患者 encounter。</li>
+              </ul>
+            </div>
+          </details>
+
+          <details class="source-card" open>
+            <summary>标准、监管与证据 <span class="tag warn">治理要求</span></summary>
+            <div class="source-body">
+              <ul>
+                <li><a href="https://www.gov.cn/xinwen/2018-12/09/content_5347261.htm">国家卫健委电子病历分级评价通知</a>：以电子病历为核心推进医疗机构信息化建设，是国内落地的基本背景。</li>
+                <li><a href="https://www.healthit.gov/topic/laws-regulation-and-policy/health-data-technology-and-interoperability-certification-program">ONC HTI-1</a>：对认证健康 IT 中 AI/预测算法提出透明度和风险管理要求。</li>
+                <li><a href="https://www.who.int/publications/i/item/9789240029200">WHO AI for Health</a>：强调自主性、安全、透明、问责、公平、可持续等原则。</li>
+                <li><a href="https://pubmed.ncbi.nlm.nih.gov/39688515/">JAMIA 环境 AI scribe 研究</a>：45 名医生、3 个月、9629 次使用，提示可减少文档和 EHR 时间，但个体差异显著。</li>
+              </ul>
+            </div>
+          </details>
+        </div>
+      </section>
+
+      <section id="features">
+        <h2>功能整理</h2>
+        <p class="section-lead">
+          下列功能按当前项目可落地程度分层。点击筛选按钮可查看不同阶段推荐。
+        </p>
+        <div class="filters" aria-label="功能筛选">
+          <button class="filter-btn active" data-filter="all" type="button">全部</button>
+          <button class="filter-btn" data-filter="p1" type="button">P1 当前文书系统</button>
+          <button class="filter-btn" data-filter="p2" type="button">P2 接入 HIS 后</button>
+          <button class="filter-btn" data-filter="p3" type="button">P3 高治理要求</button>
+        </div>
+
+        <div class="feature-grid">
+          <article class="feature" data-stage="p1">
+            <h3>AI 文书摘要 <span class="tag ok">优先做</span></h3>
+            <p>从导入 XML 中抽取主诉、现病史、诊断、医嘱、检查检验、手术/护理记录等，生成医生可快速浏览的结构化摘要。</p>
+            <ul>
+              <li>适合当前本地 XML 流程，不依赖完整 HIS。</li>
+              <li>输出必须带来源段落和字段定位，避免无根据总结。</li>
+              <li>可用于右侧 AI 面板、打印前确认页、病历交接。</li>
+            </ul>
+          </article>
+
+          <article class="feature" data-stage="p1">
+            <h3>AI 病历质控 <span class="tag ok">优先做</span></h3>
+            <p>检查文书完整性、时间逻辑、性别年龄冲突、必填项缺失、术语不规范、前后矛盾、占位符未清理等问题。</p>
+            <ul>
+              <li>这是国内电子病历 AI 最容易产生管理价值的方向。</li>
+              <li>建议先做规则引擎 + LLM 解释，而不是纯 LLM 判断。</li>
+              <li>质控结果要分严重程度，并支持一键定位到文书位置。</li>
+            </ul>
+          </article>
+
+          <article class="feature" data-stage="p1">
+            <h3>文内问答与定位 <span class="tag ok">优先做</span></h3>
+            <p>医生可问“患者是否有青霉素过敏”“出院诊断和入院诊断差异是什么”“哪一段提到感染风险”，系统返回答案和引用。</p>
+            <ul>
+              <li>低风险、高体验提升，适合作为 AI 面板核心入口。</li>
+              <li>只回答当前文书可证实内容，不做外延诊断。</li>
+              <li>可和 XML 节点路径、段落索引、页面坐标联动。</li>
+            </ul>
+          </article>
+
+          <article class="feature" data-stage="p1">
+            <h3>段落改写与模板补全 <span class="tag ok">优先做</span></h3>
+            <p>对医生选中的段落做规范化表述、SOAP/H&amp;P 格式化、摘要化、交接班版、患者版说明等。</p>
+            <ul>
+              <li>只生成草稿，不自动覆盖原文。</li>
+              <li>需要保留修改前后 diff，医生确认后插入。</li>
+              <li>可从“开始”工具栏新增 AI 按钮或右侧抽屉进入。</li>
+            </ul>
+          </article>
+
+          <article class="feature" data-stage="p1">
+            <h3>打印/归档前 AI 检查 <span class="tag ok">优先做</span></h3>
+            <p>在打印、打印预览、归档前自动提示缺签名、缺日期、占位文本、异常空白页、表格未填、敏感信息未脱敏等。</p>
+            <ul>
+              <li>贴合当前项目已有打印链路。</li>
+              <li>可先做“阻断/提醒/建议”三级提示。</li>
+              <li>对演示系统也有价值，能体现医疗文书严肃性。</li>
+            </ul>
+          </article>
+
+          <article class="feature" data-stage="p2">
+            <h3>纵向病程摘要 <span class="tag info">接入后做</span></h3>
+            <p>基于多次就诊、检查检验、用药、手术和护理记录生成时间线摘要，类似 Oracle Chart Review Agent 和 MEDITECH Expanse Navigator。</p>
+            <ul>
+              <li>需要 HIS/EMR 数据源、患者身份、Encounter 关联。</li>
+              <li>推荐以 FHIR DocumentReference、Composition、Observation、DiagnosticReport 等资源做抽象层。</li>
+            </ul>
+          </article>
+
+          <article class="feature" data-stage="p2">
+            <h3>临床知识库 RAG <span class="tag info">接入后做</span></h3>
+            <p>把院内制度、路径、模板、诊疗指南、药品说明书接入检索增强生成，用于解释质控规则、推荐模板和辅助查询。</p>
+            <ul>
+              <li>必须显示引用来源、版本、发布日期。</li>
+              <li>知识库与患者事实分开检索，避免混淆“事实”和“建议”。</li>
+            </ul>
+          </article>
+
+          <article class="feature" data-stage="p2">
+            <h3>编码/CDI 辅助 <span class="tag info">接入后做</span></h3>
+            <p>根据病历内容提示 ICD 编码候选、DRG/DIP 影响点、诊断依据不足、主要诊断选择风险。</p>
+            <ul>
+              <li>需结合医保、病案首页、手术操作、费用和编码规则。</li>
+              <li>先做提示和证据定位，不做自动编码提交。</li>
+            </ul>
+          </article>
+
+          <article class="feature" data-stage="p3">
+            <h3>环境语音生成病历 <span class="tag warn">高治理</span></h3>
+            <p>录制医患对话，进行说话人分离、转写、临床概念抽取、模板化生成，并由医生审阅后入文书。</p>
+            <ul>
+              <li>市场热度最高，但需要患者告知同意、录音安全、噪声和方言处理。</li>
+              <li>建议在 P1 文书草稿和质控成熟后再做。</li>
+            </ul>
+          </article>
+
+          <article class="feature" data-stage="p3">
+            <h3>医嘱与诊疗建议 <span class="tag risk">谨慎</span></h3>
+            <p>基于病历和指南给出检查、检验、用药、随访建议。该方向临床价值高，但属于决策支持，必须满足透明、证据、权限和风险控制。</p>
+            <ul>
+              <li>第一阶段不建议自动执行或自动写回医嘱。</li>
+              <li>至少要有人审、来源属性、规则版本、审计日志和风险分级。</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section id="roadmap">
+        <h2>开发路线</h2>
+        <p class="section-lead">
+          推荐按 3 个阶段推进，先拿到可演示、可验收、低风险的 AI 文书闭环，再逐步进入数据整合和临床决策支持。
+        </p>
+        <div class="timeline">
+          <div class="phase">
+            <span class="num">1</span>
+            <h3>文书 AI 助手 MVP</h3>
+            <p>目标：在当前 XML 文书工作台内新增 AI 面板。</p>
+            <ul>
+              <li>文书摘要、文内问答、质控清单。</li>
+              <li>打印前检查和建议导出。</li>
+              <li>只读分析，不自动改原文。</li>
+              <li>预计 2-3 周可出可演示版本。</li>
+            </ul>
+          </div>
+
+          <div class="phase">
+            <span class="num">2</span>
+            <h3>AI 草稿与闭环编辑</h3>
+            <p>目标：从“看建议”升级到“医生确认后写入”。</p>
+            <ul>
+              <li>选中文本改写、模板补全、摘要转交接班。</li>
+              <li>建议 diff、采纳/驳回、审计记录。</li>
+              <li>接通 DCWriter 编辑 API 后再写回。</li>
+              <li>预计 3-5 周，取决于编辑 API 暴露程度。</li>
+            </ul>
+          </div>
+
+          <div class="phase">
+            <span class="num">3</span>
+            <h3>HIS/EMR 集成智能</h3>
+            <p>目标：从单份文书扩展到患者级上下文。</p>
+            <ul>
+              <li>FHIR/接口层接入患者、就诊、检查、用药、诊断。</li>
+              <li>纵向病程摘要、知识库 RAG、CDSS 提示。</li>
+              <li>语音病历和医嘱建议进入试点。</li>
+              <li>预计 2-3 个月以上，依赖接口和治理。</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="architecture">
+        <h2>工程落点</h2>
+        <p class="section-lead">
+          当前项目是 Vue 3 + Vite 前端、.NET Minimal API 后端、DCWriter 外部渲染资源。AI 功能建议以旁路服务接入，先不侵入渲染和打印内核。
+        </p>
+        <div class="svg-panel" aria-label="建议架构图">
+          <svg viewBox="0 0 980 420" role="img" aria-label="文书 AI 旁路架构图">
+            <rect x="0" y="0" width="980" height="420" fill="#fff"></rect>
+            <g font-family="Microsoft YaHei UI, Segoe UI, Arial" font-size="14">
+              <rect x="48" y="58" width="220" height="110" rx="8" fill="#eaf2ff" stroke="#8bb9ff"></rect>
+              <text x="158" y="92" text-anchor="middle" font-size="17" font-weight="700" fill="#0f4fb8">前端工作台</text>
+              <text x="158" y="120" text-anchor="middle" fill="#334155">EditorShell.vue</text>
+              <text x="158" y="144" text-anchor="middle" fill="#334155">ImportToolbar + CanvasPreview</text>
+
+              <rect x="48" y="234" width="220" height="110" rx="8" fill="#ecfdf5" stroke="#86efac"></rect>
+              <text x="158" y="268" text-anchor="middle" font-size="17" font-weight="700" fill="#0f766e">当前文书上下文</text>
+              <text x="158" y="296" text-anchor="middle" fill="#334155">ImportedDocument.xml</text>
+              <text x="158" y="320" text-anchor="middle" fill="#334155">warnings / fileName / renderMode</text>
+
+              <rect x="382" y="58" width="230" height="110" rx="8" fill="#fff7ed" stroke="#fdba74"></rect>
+              <text x="497" y="92" text-anchor="middle" font-size="17" font-weight="700" fill="#b45309">AI 面板与交互层</text>
+              <text x="497" y="120" text-anchor="middle" fill="#334155">AiAssistantPanel.vue</text>
+              <text x="497" y="144" text-anchor="middle" fill="#334155">摘要 / 质控 / 问答 / 改写</text>
+
+              <rect x="382" y="234" width="230" height="110" rx="8" fill="#f8fafc" stroke="#cbd5e1"></rect>
+              <text x="497" y="268" text-anchor="middle" font-size="17" font-weight="700" fill="#334155">后端 AI API</text>
+              <text x="497" y="296" text-anchor="middle" fill="#334155">/api/ai/analyze</text>
+              <text x="497" y="320" text-anchor="middle" fill="#334155">脱敏、审计、任务状态</text>
+
+              <rect x="722" y="58" width="210" height="110" rx="8" fill="#f5f3ff" stroke="#c4b5fd"></rect>
+              <text x="827" y="92" text-anchor="middle" font-size="17" font-weight="700" fill="#6d28d9">模型/知识库</text>
+              <text x="827" y="120" text-anchor="middle" fill="#334155">LLM Gateway</text>
+              <text x="827" y="144" text-anchor="middle" fill="#334155">院内模板 / 指南 RAG</text>
+
+              <rect x="722" y="234" width="210" height="110" rx="8" fill="#ffe4e6" stroke="#fda4af"></rect>
+              <text x="827" y="268" text-anchor="middle" font-size="17" font-weight="700" fill="#be123c">未来 HIS/EMR</text>
+              <text x="827" y="296" text-anchor="middle" fill="#334155">FHIR / HL7 / 专有接口</text>
+              <text x="827" y="320" text-anchor="middle" fill="#334155">患者、就诊、检验、医嘱</text>
+
+              <path d="M268 110 H382" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"></path>
+              <path d="M158 168 V234" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"></path>
+              <path d="M268 290 H382" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"></path>
+              <path d="M497 168 V234" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"></path>
+              <path d="M612 290 H722" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"></path>
+              <path d="M612 110 H722" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"></path>
+
+              <defs>
+                <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+                  <path d="M0,0 L0,6 L9,3 z" fill="#64748b"></path>
+                </marker>
+              </defs>
+            </g>
+          </svg>
+        </div>
+
+        <div class="two-col" style="margin-top: 16px;">
+          <div class="card">
+            <h3>建议新增前端模块</h3>
+            <ul>
+              <li><code>frontend/src/components/editor/AiAssistantPanel.vue</code>：右侧 AI 面板。</li>
+              <li><code>frontend/src/composables/useAiAssistant.ts</code>：AI 请求、任务状态、取消、缓存。</li>
+              <li><code>frontend/src/types/ai.ts</code>：建议、引用、风险、采纳状态类型。</li>
+              <li><code>ImportToolbar.vue</code>：增加 AI 入口按钮或页签，不改变原有打印能力。</li>
+            </ul>
+          </div>
+
+          <div class="card">
+            <h3>建议新增后端模块</h3>
+            <ul>
+              <li><code>/api/ai/document-summary</code>：当前文书摘要。</li>
+              <li><code>/api/ai/quality-check</code>：病历质控清单。</li>
+              <li><code>/api/ai/document-chat</code>：基于当前文书问答。</li>
+              <li><code>/api/ai/rewrite</code>：选区改写和模板补全。</li>
+              <li><code>AiAuditStore</code>：记录输入摘要、输出、采纳动作、模型版本。</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3 style="margin-top: 20px;">接口草案</h3>
+        <pre class="code"><code>POST /api/ai/quality-check
+{
+  "documentId": "local-or-session-id",
+  "fileName": "imported-record.xml",
+  "xml": "&lt;...sanitized xml...&gt;",
+  "checks": ["requiredFields", "timeline", "consistency", "terminology", "printReadiness"]
+}
+
+200 OK
+{
+  "items": [
+    {
+      "id": "qc-001",
+      "severity": "warning",
+      "title": "出院小结缺少随访计划",
+      "reason": "文书包含出院诊断，但未发现随访时间或复诊建议。",
+      "evidence": [{ "path": "/XTextDocument/...", "quote": "出院诊断：..." }],
+      "suggestedAction": "补充随访计划；医生确认后写入。",
+      "requiresHumanReview": true
+    }
+  ],
+  "model": "configured-provider/model-version",
+  "generatedAt": "2026-05-15T09:00:00+08:00"
+}</code></pre>
+      </section>
+
+      <section id="risk">
+        <h2>安全合规</h2>
+        <p class="section-lead">
+          医疗 AI 的核心不是“能不能生成”，而是“能不能解释、追溯、回滚、审计，并让医生保留最终责任”。建议从第一天就把这些机制做进产品。
+        </p>
+        <div class="three-col">
+          <div class="risk-card card">
+            <h3>人工确认</h3>
+            <p>所有 AI 输出默认是草稿或建议。写回病历、打印归档、用于诊疗决策前必须经过医生确认。</p>
+            <ul>
+              <li>每条建议有“采纳/忽略/修改后采纳”。</li>
+              <li>保留原文、AI 草稿和最终文本 diff。</li>
+            </ul>
+          </div>
+
+          <div class="risk-card card">
+            <h3>来源可追溯</h3>
+            <p>摘要、质控、问答必须带证据位置。不能在文书中找到依据的内容，应标记为“未证实”。</p>
+            <ul>
+              <li>引用 XML 节点路径、段落、页码或渲染坐标。</li>
+              <li>知识库引用需带版本和发布日期。</li>
+            </ul>
+          </div>
+
+          <div class="risk-card card">
+            <h3>隐私与数据最小化</h3>
+            <p>默认只上传完成脱敏后的必要片段。真实医院部署时需要院内部署、专线或合规云，并记录访问边界。</p>
+            <ul>
+              <li>患者标识、手机号、身份证、地址等先脱敏。</li>
+              <li>AI 请求和响应进入审计日志。</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="table-wrap" style="margin-top: 16px;">
+          <table>
+            <thead>
+              <tr>
+                <th>风险点</th>
+                <th>典型表现</th>
+                <th>产品控制</th>
+                <th>技术控制</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>幻觉与过度推断</td>
+                <td>AI 编出文书不存在的病史、诊断或治疗建议。</td>
+                <td>“仅基于当前文书回答”；无证据则提示未找到。</td>
+                <td>RAG 引用校验、答案逐条证据绑定、置信度和拒答策略。</td>
+              </tr>
+              <tr>
+                <td>自动写回风险</td>
+                <td>未经医生确认就改变正式病历。</td>
+                <td>所有生成内容进入待确认区，医生点击后才写入。</td>
+                <td>写回 API 权限分离、diff 审计、撤销和版本记录。</td>
+              </tr>
+              <tr>
+                <td>临床责任不清</td>
+                <td>医生误以为 AI 输出等同诊疗结论。</td>
+                <td>高风险功能标记“辅助建议”，不替代医生判断。</td>
+                <td>模型卡、来源属性、风险分级、角色权限。</td>
+              </tr>
+              <tr>
+                <td>数据泄露</td>
+                <td>真实病历进入外部模型或日志。</td>
+                <td>部署说明明确数据边界，默认禁用真实患者信息外发。</td>
+                <td>脱敏、最小字段、加密传输、审计、可配置模型网关。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="sources">
+        <h2>资料来源</h2>
+        <p class="section-lead">以下为本次调研使用的主要公开资料，按可信度优先引用官方文档、政府/标准机构和论文索引。</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>类别</th>
+                <th>来源</th>
+                <th>对本项目的启发</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>大型 EHR</td>
+                <td><a href="https://www.epic.com/epic/post/epic-ai-charting-rolls-out-alongside-an-expanding-set-of-built-in-ai-capabilities">Epic AI Charting</a></td>
+                <td>AI 嵌入文书和医嘱工作流，但第一步仍是医生可审阅的草稿。</td>
+              </tr>
+              <tr>
+                <td>大型厂商</td>
+                <td><a href="https://learn.microsoft.com/en-us/industry/healthcare/dragon-copilot/">Microsoft Dragon Copilot 文档</a></td>
+                <td>AI 工作台应覆盖医生、护士等角色，并围绕文档、离散数据、流程自动化组织能力。</td>
+              </tr>
+              <tr>
+                <td>大型 EHR</td>
+                <td><a href="https://docs.oracle.com/en/industries/health/clinical-ai-agent/ohaca/">Oracle Clinical AI Agent 文档</a></td>
+                <td>图表回顾类问答必须把 EHR 来源链接返回给用户。</td>
+              </tr>
+              <tr>
+                <td>云服务</td>
+                <td><a href="https://aws.amazon.com/healthscribe/">AWS HealthScribe</a></td>
+                <td>环境语音病历可以作为远期方向，但当前更适合作为可插拔服务能力。</td>
+              </tr>
+              <tr>
+                <td>云服务</td>
+                <td><a href="https://cloud.google.com/generative-ai-app-builder/docs/search-hc-data">Google Vertex AI Search for Healthcare</a></td>
+                <td>医疗搜索和摘要应定位为持证人员审阅下的辅助工具。</td>
+              </tr>
+              <tr>
+                <td>EHR 厂商</td>
+                <td><a href="https://ehr.meditech.com/ehr-solutions/expanse-for-physicians">MEDITECH Expanse for Physicians</a></td>
+                <td>文书系统后续可从单份 XML 扩展到结构化、非结构化、扫描件和历史数据的统一检索。</td>
+              </tr>
+              <tr>
+                <td>国内政策</td>
+                <td><a href="https://www.gov.cn/xinwen/2018-12/09/content_5347261.htm">电子病历系统应用水平分级评价通知</a></td>
+                <td>AI 质控、知识库、闭环应用应服务于电子病历高级别建设，而不是只做演示功能。</td>
+              </tr>
+              <tr>
+                <td>监管</td>
+                <td><a href="https://www.healthit.gov/topic/laws-regulation-and-policy/health-data-technology-and-interoperability-certification-program">ONC HTI-1 Final Rule</a></td>
+                <td>对预测/决策支持类 AI，应内置透明度、来源属性、风险管理和治理证据。</td>
+              </tr>
+              <tr>
+                <td>标准</td>
+                <td><a href="https://hl7.org/fhir/us/core/clinical-notes.html">HL7 FHIR Clinical Notes</a>、<a href="https://fhir.hl7.org/fhir/documentreference.html">DocumentReference</a>、<a href="https://hl7.github.io/cds-hooks-hl7-site/2.0/">CDS Hooks</a></td>
+                <td>未来 HIS/EMR 集成应避免只绑定某一套 XML，建议抽象到 FHIR 文档、诊断、检验和决策支持标准。</td>
+              </tr>
+              <tr>
+                <td>论文</td>
+                <td><a href="https://pubmed.ncbi.nlm.nih.gov/39688515/">Ambient artificial intelligence scribes: utilization and impact on documentation time</a></td>
+                <td>环境 scribe 能减少文档负担，但收益有个体差异，产品试点需做量化评估。</td>
+              </tr>
+              <tr>
+                <td>论文综述</td>
+                <td><a href="https://pubmed.ncbi.nlm.nih.gov/40371947/">Scientific Evidence for Clinical Text Summarization Using Large Language Models</a></td>
+                <td>临床文本摘要是有研究基础的方向，但必须设计评估、引用和人工审阅。</td>
+              </tr>
+              <tr>
+                <td>伦理治理</td>
+                <td><a href="https://www.who.int/publications/i/item/9789240029200">WHO Ethics and governance of artificial intelligence for health</a>、<a href="https://www.nist.gov/itl/ai-risk-management-framework">NIST AI RMF</a></td>
+                <td>从 MVP 开始建立透明、问责、公平、安全和可持续的 AI 治理框架。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="small">说明：国内厂商资料可作为市场观察，但具体功能口径更建议以医院试点需求、等保/数据合规要求、院内质控规则和接口条件为准。</p>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const navLinks = Array.from(document.querySelectorAll('.nav a'));
+    const sections = navLinks
+      .map((link) => document.querySelector(link.getAttribute('href')))
+      .filter(Boolean);
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) {
+          return;
+        }
+        navLinks.forEach((link) => {
+          link.classList.toggle('active', link.getAttribute('href') === `#${entry.target.id}`);
+        });
+      });
+    }, { rootMargin: '-20% 0px -65% 0px' });
+
+    sections.forEach((section) => observer.observe(section));
+
+    const filterButtons = Array.from(document.querySelectorAll('.filter-btn'));
+    const featureCards = Array.from(document.querySelectorAll('.feature'));
+
+    filterButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        const filter = button.dataset.filter;
+        filterButtons.forEach((item) => item.classList.toggle('active', item === button));
+        featureCards.forEach((card) => {
+          const visible = filter === 'all' || card.dataset.stage === filter;
+          card.hidden = !visible;
+        });
+      });
+    });
+  </script>
+</body>
+</html>
