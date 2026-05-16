@@ -139,7 +139,60 @@ describe('documentSaveService', () => {
     })
   })
 
+  it('returns backend failure when fetch rejects with an Error', async () => {
+    const { validateDocumentXml } = await import('./documentValidationService')
+    vi.mocked(validateDocumentXml).mockReturnValue([])
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        throw new Error('Failed to fetch')
+      }),
+    )
+
+    await expect(
+      saveDocumentToBackend(
+        { saveXml: () => ({ ok: true, xml: '<document />' }) },
+        {
+          sessionId: 'session-1',
+          fileName: 'test.xml',
+          source: 'local',
+        },
+      ),
+    ).resolves.toEqual({
+      ok: false,
+      reason: 'backend-failed',
+      message: 'Failed to fetch',
+    })
+  })
+
+  it('returns fallback backend failure when fetch rejects without an Error', async () => {
+    const { validateDocumentXml } = await import('./documentValidationService')
+    vi.mocked(validateDocumentXml).mockReturnValue([])
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        throw 'network-failed'
+      }),
+    )
+
+    await expect(
+      saveDocumentToBackend(
+        { saveXml: () => ({ ok: true, xml: '<document />' }) },
+        {
+          sessionId: 'session-1',
+          fileName: 'test.xml',
+          source: 'local',
+        },
+      ),
+    ).resolves.toEqual({
+      ok: false,
+      reason: 'backend-failed',
+      message: '文档保存失败。',
+    })
+  })
+
   it('downloads XML through a blob URL', () => {
+    vi.useFakeTimers()
     const click = vi.fn()
     const anchor = {
       href: '',
@@ -162,6 +215,10 @@ describe('documentSaveService', () => {
     expect(anchor.href).toBe('blob:document')
     expect(anchor.download).toBe('test.xml')
     expect(click).toHaveBeenCalled()
+    expect(revokeObjectURL).not.toHaveBeenCalled()
+
+    vi.runOnlyPendingTimers()
+
     expect(revokeObjectURL).toHaveBeenCalledWith('blob:document')
   })
 })

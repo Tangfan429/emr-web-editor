@@ -32,17 +32,26 @@ export async function saveDocumentToBackend(
     return { ok: false, reason: 'validation-failed', issues }
   }
 
-  const response = await fetch('/api/documents/save', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      sessionId: options.sessionId,
-      fileName: options.fileName,
-      xml: saveResult.xml,
-      source: options.source,
-      updatedAt: new Date().toISOString(),
-    }),
-  })
+  let response: Response
+  try {
+    response = await fetch('/api/documents/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId: options.sessionId,
+        fileName: options.fileName,
+        xml: saveResult.xml,
+        source: options.source,
+        updatedAt: new Date().toISOString(),
+      }),
+    })
+  } catch (error) {
+    return {
+      ok: false,
+      reason: 'backend-failed',
+      message: error instanceof Error ? error.message : '文档保存失败。',
+    }
+  }
 
   const payload = await response.json().catch(() => null)
   if (!response.ok) {
@@ -63,7 +72,7 @@ export function downloadXml(fileName: string, xml: string) {
   anchor.href = url
   anchor.download = fileName || 'document.xml'
   anchor.click()
-  URL.revokeObjectURL(url)
+  setTimeout(() => URL.revokeObjectURL(url), 0)
 }
 
 function readErrorMessage(payload: unknown) {
