@@ -36,4 +36,5 @@ frontend/*-run.err.log
 .tmp*/
 .playwright-mcp/
 .superpowers/
+.worktrees/
 frontend/pnpm-lock.yaml
