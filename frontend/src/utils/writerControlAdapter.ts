@@ -29,13 +29,15 @@ export type WriterAdapterFailureReason =
   | 'command-rejected'
   | 'save-empty'
 
-export type WriterAdapterResult =
-  | { ok: true }
-  | { ok: false; reason: WriterAdapterFailureReason; message: string }
+export type WriterAdapterFailure = {
+  ok: false
+  reason: WriterAdapterFailureReason
+  message: string
+}
 
-export type WriterSaveResult =
-  | { ok: true; xml: string }
-  | { ok: false; reason: WriterAdapterFailureReason; message: string }
+export type WriterAdapterResult = { ok: true } | WriterAdapterFailure
+
+export type WriterSaveResult = { ok: true; xml: string } | WriterAdapterFailure
 
 const writerUnavailableMessage = '外部编辑器尚未加载，无法执行该操作。'
 
@@ -133,7 +135,7 @@ export function createWriterControlAdapter(target: WriterControlTarget | null) {
   }
 }
 
-function writerUnavailable(): WriterAdapterResult & WriterSaveResult {
+function writerUnavailable(): WriterAdapterFailure {
   return {
     ok: false,
     reason: 'writer-unavailable',
