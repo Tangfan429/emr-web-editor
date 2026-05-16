@@ -11,6 +11,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
 builder.Services.AddSingleton<DocumentSessionStore>();
+builder.Services.AddSingleton(ResolveRendererAssets(builder.Configuration, builder.Environment.ContentRootPath));
+builder.Services.AddSingleton<TemplateStore>();
+builder.Services.AddSingleton<SavedDocumentStore>();
 builder.Services.Configure<FormOptions>(options =>
 {
     options.MultipartBodyLengthLimit = 10 * 1024 * 1024;
@@ -42,6 +45,49 @@ if (app.Environment.IsDevelopment())
 }
 
 app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }));
+
+app.MapGet("/api/templates", (TemplateStore store) =>
+{
+    return Results.Ok(store.ListTemplates());
+});
+
+app.MapGet("/api/templates/{id}", async (string id, TemplateStore store) =>
+{
+    var template = await store.ReadTemplateAsync(id);
+    return template is null
+        ? Results.NotFound(new ApiError("TEMPLATE_NOT_FOUND", "未找到指定模板。"))
+        : Results.Ok(template);
+});
+
+app.MapPost("/api/documents/save", (SaveDocumentRequest request, SavedDocumentStore store) =>
+{
+    if (string.IsNullOrWhiteSpace(request.Xml))
+    {
+        return Results.BadRequest(new ApiError("EMPTY_XML", "保存内容不能为空。"));
+    }
+
+    var fileName = string.IsNullOrWhiteSpace(request.FileName) ? "untitled.xml" : request.FileName;
+    if (!LooksLikeXml(fileName, request.Xml))
+    {
+        return Results.BadRequest(ApiError.UnsupportedFormat());
+    }
+
+    try
+    {
+        _ = ParseXml(request.Xml);
+    }
+    catch (XmlException)
+    {
+        return Results.BadRequest(ApiError.InvalidXml());
+    }
+
+    var saved = store.Save(request with { FileName = fileName });
+    return Results.Ok(new SaveDocumentResponse(
+        saved.Id,
+        saved.FileName,
+        saved.Source,
+        saved.SavedAt));
+});
 
 app.MapGet("/api/renderer/status", () =>
 {
@@ -731,6 +777,136 @@ sealed class DocumentSessionStore
     }
 }
 
+sealed class TemplateStore
+{
+    private readonly RendererAssets _rendererAssets;
+    private readonly string _contentRoot;
+
+    public TemplateStore(RendererAssets rendererAssets, IWebHostEnvironment environment)
+    {
+        _contentRoot = environment.ContentRootPath;
+        _rendererAssets = rendererAssets;
+    }
+
+    public IReadOnlyList<TemplateSummaryResponse> ListTemplates()
+    {
+        return EnumerateTemplateFiles()
+            .Select(ToSummary)
+            .GroupBy(template => template.Id, StringComparer.OrdinalIgnoreCase)
+            .Select(group => group.First())
+            .OrderBy(template => template.Name, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    }
+
+    public async Task<TemplateContentResponse?> ReadTemplateAsync(string id)
+    {
+        var match = EnumerateTemplateFiles()
+            .Select(path => new { Path = path, Summary = ToSummary(path) })
+            .FirstOrDefault(template => string.Equals(template.Summary.Id, id, StringComparison.OrdinalIgnoreCase));
+
+        if (match is null)
+        {
+            return null;
+        }
+
+        var xml = await File.ReadAllTextAsync(match.Path, Encoding.UTF8);
+        return new TemplateContentResponse(
+            match.Summary.Id,
+            match.Summary.Name,
+            match.Summary.FileName,
+            match.Summary.Category,
+            xml);
+    }
+
+    private TemplateSummaryResponse ToSummary(string path)
+    {
+        var fileName = Path.GetFileName(path);
+        var name = Path.GetFileNameWithoutExtension(path).Trim();
+        return new TemplateSummaryResponse(
+            ToTemplateId(name),
+            name,
+            fileName,
+            ResolveCategory(path));
+    }
+
+    private string ResolveCategory(string path)
+    {
+        var directory = Path.GetDirectoryName(path);
+        if (directory is null)
+        {
+            return "demo";
+        }
+
+        if (PathStartsWith(directory, _rendererAssets.ScriptRoot))
+        {
+            return "source";
+        }
+
+        if (PathStartsWith(directory, _rendererAssets.RuntimeRoot))
+        {
+            return "runtime";
+        }
+
+        return "demo";
+    }
+
+    private IEnumerable<string> EnumerateTemplateFiles()
+    {
+        return EnumerateTemplateDirectories()
+            .Where(Directory.Exists)
+            .SelectMany(directory => Directory.EnumerateFiles(directory, "*.xml", SearchOption.TopDirectoryOnly))
+            .Distinct(StringComparer.OrdinalIgnoreCase);
+    }
+
+    private IEnumerable<string> EnumerateTemplateDirectories()
+    {
+        yield return Path.Combine(_rendererAssets.ScriptRoot, "demoDocuments");
+        yield return Path.Combine(_rendererAssets.RuntimeRoot, "demoDocuments");
+        yield return Path.Combine(_contentRoot, "renderer-source", "demoDocuments");
+        yield return Path.Combine(_contentRoot, "renderer-runtime", "demoDocuments");
+    }
+
+    private static string ToTemplateId(string name)
+    {
+        var normalized = name
+            .Replace("（", "-", StringComparison.Ordinal)
+            .Replace("）", string.Empty, StringComparison.Ordinal)
+            .Replace("(", "-", StringComparison.Ordinal)
+            .Replace(")", string.Empty, StringComparison.Ordinal);
+
+        return string.Join('-', normalized
+            .Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            .Trim('-');
+    }
+
+    private static bool PathStartsWith(string path, string root)
+    {
+        var relativePath = Path.GetRelativePath(root, path);
+        return relativePath == "."
+            || (!relativePath.StartsWith("..", StringComparison.Ordinal)
+                && !Path.IsPathRooted(relativePath));
+    }
+}
+
+sealed class SavedDocumentStore
+{
+    private readonly ConcurrentDictionary<string, SavedDocumentSession> _sessions = new();
+
+    public SavedDocumentSession Save(SaveDocumentRequest request)
+    {
+        var id = string.IsNullOrWhiteSpace(request.SessionId) ? Guid.NewGuid().ToString("N") : request.SessionId;
+        var saved = new SavedDocumentSession(
+            id,
+            string.IsNullOrWhiteSpace(request.FileName) ? "untitled.xml" : request.FileName,
+            request.Xml,
+            string.IsNullOrWhiteSpace(request.Source) ? "backend" : request.Source,
+            DateTimeOffset.UtcNow);
+
+        _sessions[id] = saved;
+        return saved;
+    }
+}
+
 static class SensitiveText
 {
     private static readonly string[] Terms =
@@ -759,6 +935,16 @@ static class SensitiveText
 record DocumentSession(string Id, string FileName, string Xml, string[] Warnings, DateTimeOffset CreatedAt);
 
 record ImportDocumentResponse(string Id, string FileName, string Xml, string[] Warnings, string RenderMode);
+
+record TemplateSummaryResponse(string Id, string Name, string FileName, string Category);
+
+record TemplateContentResponse(string Id, string Name, string FileName, string Category, string Xml);
+
+record SaveDocumentRequest(string? SessionId, string FileName, string Xml, string Source, DateTimeOffset? UpdatedAt);
+
+record SaveDocumentResponse(string Id, string FileName, string Source, DateTimeOffset SavedAt);
+
+record SavedDocumentSession(string Id, string FileName, string Xml, string Source, DateTimeOffset SavedAt);
 
 record RendererAssets(string ScriptRoot, string RuntimeRoot);
 
