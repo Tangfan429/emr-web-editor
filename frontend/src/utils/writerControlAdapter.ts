@@ -9,9 +9,9 @@ import {
 export interface WriterControlTarget extends WriterPrintTarget {
   LoadDocumentFromString?: (
     xml: string,
-    format?: string,
+    format: string,
     specifyLoadPart?: unknown,
-    errorCallback?: ((result: unknown) => void) | null,
+    errorCallback?: ((result: unknown) => void),
   ) => boolean | void
   SaveDocumentToString?: (options?: unknown, textOptions?: unknown) => string
   DCExecuteCommand?: (commandName: string, showUI: boolean, parameter?: unknown) => boolean | void
@@ -61,7 +61,7 @@ export function createWriterControlAdapter(target: WriterControlTarget | null) {
       }
 
       return normalizeWriterResult(
-        target.LoadDocumentFromString(xml, 'xml', null, null),
+        target.LoadDocumentFromString(xml, 'xml', null, undefined),
         '编辑器未接受 XML 加载请求。',
       )
     },

@@ -19,7 +19,7 @@ describe('writerControlAdapter', () => {
     }
 
     expect(createWriterControlAdapter(target).loadXml('<document />')).toEqual({ ok: true })
-    expect(target.LoadDocumentFromString).toHaveBeenCalledWith('<document />', 'xml', null, null)
+    expect(target.LoadDocumentFromString).toHaveBeenCalledWith('<document />', 'xml', null, undefined)
   })
 
   it('reports unavailable load API when LoadDocumentFromString is missing', () => {

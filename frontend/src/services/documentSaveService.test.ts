@@ -44,7 +44,7 @@ describe('documentSaveService', () => {
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
-  it('posts latest XML from adapter to backend and returns response', async () => {
+  it('posts latest XML from adapter to backend and returns response with saved XML', async () => {
     const { validateDocumentXml } = await import('./documentValidationService')
     vi.mocked(validateDocumentXml).mockReturnValue([])
     vi.useFakeTimers()
@@ -70,7 +70,7 @@ describe('documentSaveService', () => {
           source: 'local',
         },
       ),
-    ).resolves.toEqual({ ok: true, response: backendResponse })
+    ).resolves.toEqual({ ok: true, response: backendResponse, xml: '<document />' })
 
     expect(fetchMock).toHaveBeenCalledWith('/api/documents/save', {
       method: 'POST',

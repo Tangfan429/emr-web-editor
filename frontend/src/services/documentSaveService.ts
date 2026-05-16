@@ -13,7 +13,7 @@ export interface SaveDocumentOptions {
 }
 
 export type BackendSaveResult =
-  | { ok: true; response: SaveDocumentResponse }
+  | { ok: true; response: SaveDocumentResponse; xml: string }
   | { ok: false; reason: 'adapter-failed'; message: string }
   | { ok: false; reason: 'validation-failed'; issues: ValidationIssue[] }
   | { ok: false; reason: 'backend-failed'; message: string }
@@ -62,7 +62,7 @@ export async function saveDocumentToBackend(
     }
   }
 
-  return { ok: true, response: payload as SaveDocumentResponse }
+  return { ok: true, response: payload as SaveDocumentResponse, xml: saveResult.xml }
 }
 
 export function downloadXml(fileName: string, xml: string) {
