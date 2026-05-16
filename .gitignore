@@ -35,4 +35,5 @@ frontend/*-run.err.log
 .DS_Store
 .tmp*/
 .playwright-mcp/
+.superpowers/
 frontend/pnpm-lock.yaml
