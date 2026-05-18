@@ -194,6 +194,8 @@ describe('documentSaveService', () => {
   it('downloads XML through a blob URL', () => {
     vi.useFakeTimers()
     const click = vi.fn()
+    const appendChild = vi.fn()
+    const removeChild = vi.fn()
     const anchor = {
       href: '',
       download: '',
@@ -203,6 +205,10 @@ describe('documentSaveService', () => {
     const revokeObjectURL = vi.fn()
     vi.stubGlobal('document', {
       createElement: vi.fn(() => anchor),
+      body: {
+        appendChild,
+        removeChild,
+      },
     })
     vi.stubGlobal('URL', {
       createObjectURL,
@@ -214,7 +220,9 @@ describe('documentSaveService', () => {
     expect(createObjectURL).toHaveBeenCalledWith(expect.any(Blob))
     expect(anchor.href).toBe('blob:document')
     expect(anchor.download).toBe('test.xml')
+    expect(appendChild).toHaveBeenCalledWith(anchor)
     expect(click).toHaveBeenCalled()
+    expect(removeChild).toHaveBeenCalledWith(anchor)
     expect(revokeObjectURL).not.toHaveBeenCalled()
 
     vi.runOnlyPendingTimers()

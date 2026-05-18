@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { FolderOpen, MoreHorizontal, Search } from 'lucide-vue-next'
+import { FilePlus, FolderOpen, FolderPlus, Search } from 'lucide-vue-next'
 import { computed, shallowRef } from 'vue'
 import type { TemplateTreeNode } from '../../services/templateWorkbenchService'
 import { filterTemplateTree } from '../../services/templateWorkbenchService'
@@ -15,6 +15,10 @@ interface Props {
 
 interface Emits {
   selectTemplate: [node: TemplateTreeNode]
+  createDirectory: [parentId: string]
+  createTemplate: [parentId: string]
+  renameNode: [node: TemplateTreeNode]
+  deleteNode: [node: TemplateTreeNode]
 }
 
 const props = defineProps<Props>()
@@ -59,8 +63,21 @@ function selectNode(node: TemplateTreeNode) {
         <FolderOpen :size="16" aria-hidden="true" />
         <span>模板列表</span>
       </div>
-      <button class="template-tree__more" type="button" title="更多操作">
-        <MoreHorizontal :size="16" aria-hidden="true" />
+      <button
+        class="template-tree__more"
+        type="button"
+        title="新建目录"
+        @click="emit('createDirectory', 'hospital-root')"
+      >
+        <FolderPlus :size="16" aria-hidden="true" />
+      </button>
+      <button
+        class="template-tree__more"
+        type="button"
+        title="新建模板"
+        @click="emit('createTemplate', 'hospital-root')"
+      >
+        <FilePlus :size="16" aria-hidden="true" />
       </button>
     </div>
 
@@ -88,6 +105,10 @@ function selectNode(node: TemplateTreeNode) {
           :expanded-node-ids="expandedNodeIds"
           @toggle="toggleNode"
           @select="selectNode"
+          @create-directory="emit('createDirectory', $event.id)"
+          @create-template="emit('createTemplate', $event.id)"
+          @rename-node="emit('renameNode', $event)"
+          @delete-node="emit('deleteNode', $event)"
         />
       </template>
     </div>
@@ -109,7 +130,7 @@ function selectNode(node: TemplateTreeNode) {
   display: flex;
   height: 42px;
   align-items: center;
-  justify-content: space-between;
+  gap: 5px;
   padding: 0 10px;
   border-bottom: 1px solid #d7e0e8;
   background: #ffffff;
@@ -117,6 +138,8 @@ function selectNode(node: TemplateTreeNode) {
 
 .template-tree__title {
   display: inline-flex;
+  min-width: 0;
+  flex: 1;
   align-items: center;
   gap: 7px;
   font-size: 14px;

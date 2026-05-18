@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ChevronDown, ChevronRight, FileText, MoreHorizontal } from 'lucide-vue-next'
+import { ChevronDown, ChevronRight, FilePlus, FileText, FolderPlus, Pencil, Trash2 } from 'lucide-vue-next'
 import type { TemplateTreeNode } from '../../services/templateWorkbenchService'
 
 interface Props {
@@ -12,6 +12,10 @@ interface Props {
 interface Emits {
   toggle: [node: TemplateTreeNode]
   select: [node: TemplateTreeNode]
+  createDirectory: [node: TemplateTreeNode]
+  createTemplate: [node: TemplateTreeNode]
+  renameNode: [node: TemplateTreeNode]
+  deleteNode: [node: TemplateTreeNode]
 }
 
 const props = defineProps<Props>()
@@ -41,10 +45,31 @@ const emit = defineEmits<Emits>()
       <FileText v-else :size="14" aria-hidden="true" />
       <span class="template-tree-node__label">{{ props.node.label }}</span>
       <span v-if="props.node.status" class="template-tree-node__status">{{ props.node.status }}</span>
-      <span class="template-tree-node__more" title="更多操作">
-        <MoreHorizontal :size="14" aria-hidden="true" />
-      </span>
     </button>
+    <div class="template-tree-node__actions">
+      <button
+        v-if="props.node.kind !== 'template'"
+        type="button"
+        title="新建目录"
+        @click.stop="emit('createDirectory', props.node)"
+      >
+        <FolderPlus :size="13" aria-hidden="true" />
+      </button>
+      <button
+        v-if="props.node.kind !== 'template'"
+        type="button"
+        title="新建模板"
+        @click.stop="emit('createTemplate', props.node)"
+      >
+        <FilePlus :size="13" aria-hidden="true" />
+      </button>
+      <button type="button" title="重命名" @click.stop="emit('renameNode', props.node)">
+        <Pencil :size="13" aria-hidden="true" />
+      </button>
+      <button v-if="props.node.kind !== 'root'" type="button" title="删除" @click.stop="emit('deleteNode', props.node)">
+        <Trash2 :size="13" aria-hidden="true" />
+      </button>
+    </div>
 
     <template v-if="props.node.children?.length && props.expandedNodeIds.has(props.node.id)">
       <TemplateTreeNode
@@ -56,6 +81,10 @@ const emit = defineEmits<Emits>()
         :expanded-node-ids="props.expandedNodeIds"
         @toggle="emit('toggle', $event)"
         @select="emit('select', $event)"
+        @create-directory="emit('createDirectory', $event)"
+        @create-template="emit('createTemplate', $event)"
+        @rename-node="emit('renameNode', $event)"
+        @delete-node="emit('deleteNode', $event)"
       />
     </template>
   </div>
@@ -66,7 +95,7 @@ const emit = defineEmits<Emits>()
   display: grid;
   width: 100%;
   min-height: 28px;
-  grid-template-columns: 16px minmax(0, 1fr) auto 18px;
+  grid-template-columns: 16px minmax(0, 1fr) auto;
   align-items: center;
   gap: 4px;
   border: 1px solid transparent;
@@ -101,8 +130,29 @@ const emit = defineEmits<Emits>()
   white-space: nowrap;
 }
 
-.template-tree-node__more {
+.template-tree-node__actions {
+  display: flex;
+  min-height: 22px;
+  align-items: center;
+  gap: 3px;
+  margin: -2px 4px 3px 36px;
+}
+
+.template-tree-node__actions button {
   display: inline-flex;
-  color: #66788b;
+  width: 22px;
+  height: 22px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: #607084;
+}
+
+.template-tree-node__actions button:hover {
+  border-color: #c5d6e1;
+  background: #f8fafc;
+  color: #1f4f73;
 }
 </style>

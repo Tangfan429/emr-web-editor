@@ -3,15 +3,23 @@ import { FileCog, MousePointerSquareDashed, RefreshCw } from 'lucide-vue-next'
 import { shallowRef } from 'vue'
 import type {
   ElementProperties,
+  TemplateHistoryVersion,
   TemplateProperties,
 } from '../../services/templateWorkbenchService'
 
 interface Props {
   templateProperties: TemplateProperties | null
   elementProperties: ElementProperties | null
+  historyVersions: readonly TemplateHistoryVersion[]
+  showHistory: boolean
+}
+
+interface Emits {
+  toggleHistory: []
 }
 
 const props = defineProps<Props>()
+const emit = defineEmits<Emits>()
 const activeTab = shallowRef<'template' | 'element'>('template')
 </script>
 
@@ -55,8 +63,16 @@ const activeTab = shallowRef<'template' | 'element'>('template')
         <dd>{{ props.templateProperties.category }}</dd>
       </div>
       <div class="property-panel__row">
+        <dt>文件</dt>
+        <dd>{{ props.templateProperties.fileName }}</dd>
+      </div>
+      <div class="property-panel__row">
         <dt>状态</dt>
         <dd>{{ props.templateProperties.status }}</dd>
+      </div>
+      <div class="property-panel__row">
+        <dt>未保存</dt>
+        <dd>{{ props.templateProperties.isDirty ? '是' : '否' }}</dd>
       </div>
       <div class="property-panel__row">
         <dt>版本</dt>
@@ -65,6 +81,24 @@ const activeTab = shallowRef<'template' | 'element'>('template')
       <div class="property-panel__row">
         <dt>更新时间</dt>
         <dd>{{ props.templateProperties.updatedAt }}</dd>
+      </div>
+      <div class="property-panel__row">
+        <dt>来源</dt>
+        <dd>{{ props.templateProperties.source }}</dd>
+      </div>
+      <div class="property-panel__row">
+        <dt>上传说明</dt>
+        <dd>{{ props.templateProperties.uploadMessage }}</dd>
+      </div>
+      <button class="property-panel__history-button" type="button" @click="emit('toggleHistory')">
+        {{ props.showHistory ? '收起历史版本' : '查看历史版本' }}
+      </button>
+      <div v-if="props.showHistory" class="property-panel__history">
+        <div v-for="version in props.historyVersions" :key="version.id" class="property-panel__history-item">
+          <strong>{{ version.version }}</strong>
+          <span>{{ version.savedAt }}</span>
+          <small>{{ version.note }}</small>
+        </div>
       </div>
     </dl>
 
@@ -178,5 +212,41 @@ const activeTab = shallowRef<'template' | 'element'>('template')
   color: #1f2937;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.property-panel__history-button {
+  width: 100%;
+  height: 30px;
+  margin-top: 10px;
+  border: 1px solid #b9cad6;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #1f4f73;
+  font-size: 12px;
+}
+
+.property-panel__history {
+  display: grid;
+  gap: 7px;
+  margin-top: 8px;
+}
+
+.property-panel__history-item {
+  display: grid;
+  gap: 3px;
+  padding: 8px;
+  border: 1px solid #d9e2ea;
+  border-radius: 4px;
+  background: #fff;
+  font-size: 12px;
+}
+
+.property-panel__history-item strong {
+  color: #1f4f73;
+}
+
+.property-panel__history-item span,
+.property-panel__history-item small {
+  color: #607084;
 }
 </style>

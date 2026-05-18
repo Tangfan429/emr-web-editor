@@ -74,10 +74,12 @@ export const topMenuTabs: CommandMenuTab[] = [
         commands: [
           appCommand('importXml', '导入 XML', 'FileUp'),
           appCommand('save', '保存', 'Save'),
+          appCommand('saveAsTemplate', '另存为', 'CopyPlus'),
           appCommand('downloadXml', '下载 XML', 'Download'),
-          placeholderCommand('uploadTemplate', '上传'),
-          placeholderCommand('cancelUpload', '取消上传'),
-          placeholderCommand('historyVersions', '历史版本'),
+          appCommand('uploadTemplate', '上传', 'UploadCloud'),
+          appCommand('batchUploadTemplates', '批量上传', 'CloudUpload'),
+          appCommand('cancelUpload', '取消上传', 'X'),
+          appCommand('historyVersions', '历史版本', 'History'),
         ],
       },
       {

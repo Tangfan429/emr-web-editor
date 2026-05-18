@@ -8,13 +8,16 @@ import {
   CheckSquare,
   CircleDot,
   ClipboardPaste,
+  CloudUpload,
   Columns3,
   Copy,
+  CopyPlus,
   Download,
   FileSearch,
   FileText,
   FileUp,
   Hash,
+  History,
   Italic,
   Merge,
   Printer,
@@ -28,6 +31,7 @@ import {
   Trash2,
   Underline,
   Undo2,
+  UploadCloud,
   X,
   ZoomIn,
   ZoomOut,
@@ -42,6 +46,7 @@ interface Props {
   canUseWriterPrint: boolean
   canSave: boolean
   canPrint: boolean
+  canUpload: boolean
   isSaving: boolean
   isImporting: boolean
   isPrintPreviewing: boolean
@@ -71,13 +76,16 @@ const iconMap: Record<string, Component> = {
   CheckSquare,
   CircleDot,
   ClipboardPaste,
+  CloudUpload,
   Columns3,
   Copy,
+  CopyPlus,
   Download,
   FileSearch,
   FileText,
   FileUp,
   Hash,
+  History,
   Italic,
   Merge,
   Printer,
@@ -91,6 +99,7 @@ const iconMap: Record<string, Component> = {
   Trash2,
   Underline,
   Undo2,
+  UploadCloud,
   X,
   ZoomIn,
   ZoomOut,
@@ -126,7 +135,12 @@ function isCommandDisabled(command: CommandDefinition) {
 
 function isAppCommandDisabled(commandId: AppCommandId) {
   if (commandId === 'save') return !props.canSave || props.isSaving
+  if (commandId === 'saveAsTemplate') return !props.canSave || props.isSaving
   if (commandId === 'downloadXml') return !props.canSave
+  if (commandId === 'uploadTemplate') return !props.canUpload
+  if (commandId === 'batchUploadTemplates') return !props.canUpload
+  if (commandId === 'cancelUpload') return !props.canUpload
+  if (commandId === 'historyVersions') return !props.canPrint
   if (commandId === 'print' || commandId === 'printPreview') {
     return !props.canPrint || !props.canUseWriterPrint
   }

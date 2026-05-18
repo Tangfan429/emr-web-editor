@@ -24,7 +24,12 @@ describe('commandRegistry', () => {
   it('keeps save, print, and preview as application commands', () => {
     expect(appCommandIds).toEqual(expect.arrayContaining([
       'save',
+      'saveAsTemplate',
       'downloadXml',
+      'uploadTemplate',
+      'batchUploadTemplates',
+      'cancelUpload',
+      'historyVersions',
       'print',
       'printPreview',
       'closePrintPreview',
@@ -58,10 +63,10 @@ describe('commandRegistry', () => {
     })
   })
 
-  it('contains phase-one placeholder commands for upload and future management features', () => {
-    expect(findCommandDefinition('uploadTemplate')?.kind).toBe('placeholder')
-    expect(findCommandDefinition('cancelUpload')?.kind).toBe('placeholder')
-    expect(findCommandDefinition('historyVersions')?.kind).toBe('placeholder')
+  it('promotes phase-two template commands to application commands', () => {
+    expect(findCommandDefinition('uploadTemplate')?.kind).toBe('app')
+    expect(findCommandDefinition('cancelUpload')?.kind).toBe('app')
+    expect(findCommandDefinition('historyVersions')?.kind).toBe('app')
     expect(createWriterCommandPayload('uploadTemplate')).toBeNull()
   })
 

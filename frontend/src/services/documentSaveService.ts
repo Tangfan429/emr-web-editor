@@ -71,7 +71,9 @@ export function downloadXml(fileName: string, xml: string) {
   const anchor = document.createElement('a')
   anchor.href = url
   anchor.download = fileName || 'document.xml'
+  document.body.appendChild(anchor)
   anchor.click()
+  document.body.removeChild(anchor)
   setTimeout(() => URL.revokeObjectURL(url), 0)
 }
 
