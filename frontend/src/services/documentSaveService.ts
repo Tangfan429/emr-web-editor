@@ -16,7 +16,7 @@ export type BackendSaveResult =
   | { ok: true; response: SaveDocumentResponse; xml: string }
   | { ok: false; reason: 'adapter-failed'; message: string }
   | { ok: false; reason: 'validation-failed'; issues: ValidationIssue[] }
-  | { ok: false; reason: 'backend-failed'; message: string }
+  | { ok: false; reason: 'backend-failed'; message: string; xml: string }
 
 export async function saveDocumentToBackend(
   adapter: SaveAdapter,
@@ -50,6 +50,7 @@ export async function saveDocumentToBackend(
       ok: false,
       reason: 'backend-failed',
       message: error instanceof Error ? error.message : '文档保存失败。',
+      xml: saveResult.xml,
     }
   }
 
@@ -59,6 +60,7 @@ export async function saveDocumentToBackend(
       ok: false,
       reason: 'backend-failed',
       message: readErrorMessage(payload) || '文档保存失败。',
+      xml: saveResult.xml,
     }
   }
 

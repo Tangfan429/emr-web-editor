@@ -231,6 +231,27 @@ export const topMenuTabs: CommandMenuTab[] = [
         id: 'insert-document',
         label: '文档元素',
         commands: [
+          writerCommand('insertInputFieldFromInsert', '插入输入域', 'InsertInputField', null, true, 'TextCursorInput'),
+          writerCommand(
+            'insertRadioFromInsert',
+            '插入单选框',
+            'InsertCheckBoxOrRadio',
+            { Name: 'radio', Type: 'radio', CaptionFlowLayout: true },
+            true,
+            'CircleDot',
+          ),
+          writerCommand(
+            'insertCheckboxFromInsert',
+            '插入复选框',
+            'InsertCheckBoxOrRadio',
+            { Name: 'checkbox', Type: 'checkbox', CaptionFlowLayout: true },
+            true,
+            'CheckSquare',
+          ),
+          appCommand('insertHeaderFooter', '插入页眉页脚', 'PanelTop'),
+          appCommand('saveAsHeaderFooter', '另存为页眉页脚', 'SaveAll'),
+          appCommand('insertBarcode', '插入条形码', 'Barcode'),
+          appCommand('insertQrcode', '插入二维码', 'QrCode'),
           writerCommand('insertPageBreak', '分页符', 'insertpagebreak', null, true, 'FileText'),
           writerCommand(
             'insertPageInfo',

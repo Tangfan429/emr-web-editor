@@ -1,4 +1,8 @@
 import type { TemplateContent } from '../types/document'
+import type { EditorElementProperties, FragmentTemplateTreeNode, MetadataTreeNode } from '../types/editorElement'
+import { createDefaultElementProperties } from './elementPropertyService'
+import { fetchFragmentTemplateTree, flattenFragmentTemplates } from './fragmentTemplateService'
+import { fetchMetadataTree, flattenMetadataItems } from './metadataService'
 import { fetchTemplateContent } from './templateService'
 
 export type TemplateTreeNodeKind = 'root' | 'category' | 'template'
@@ -40,13 +44,7 @@ export interface TemplateProperties {
   uploadMessage: string
 }
 
-export interface ElementProperties {
-  id: string
-  name: string
-  type: string
-  bindingPath: string
-  readonly: boolean
-}
+export type ElementProperties = EditorElementProperties
 
 export interface TemplateHistoryVersion {
   id: string
@@ -69,7 +67,9 @@ export interface TemplateWorkbenchData {
   templateTree: TemplateTreeNode[]
   categories: string[]
   metadataItems: MetadataItem[]
+  metadataTree: MetadataTreeNode[]
   fragmentTemplates: FragmentTemplate[]
+  fragmentTemplateTree: FragmentTemplateTreeNode[]
   templateProperties: TemplateProperties
   elementProperties: ElementProperties
   historyVersions: TemplateHistoryVersion[]
@@ -217,26 +217,7 @@ const initialTemplates: Record<string, TemplateRecord> = {
   'consultation-apply': templateRecord('consultation-apply', '会诊申请', '暂未分类', '未上传', 'v1.0', 'source', 'Imaging-Examination-Application-Sheet'),
 }
 
-const mockMetadataItems: MetadataItem[] = [
-  { id: 'patient-name', name: '患者姓名', code: 'Patient.Name', valueType: '文本' },
-  { id: 'admission-date', name: '入院日期', code: 'Visit.AdmissionDate', valueType: '日期' },
-  { id: 'department', name: '科室', code: 'Visit.Department', valueType: '字典' },
-  { id: 'diagnosis', name: '主要诊断', code: 'Diagnosis.Primary', valueType: '文本' },
-]
-
-const mockFragmentTemplates: FragmentTemplate[] = [
-  { id: 'chief-complaint', name: '通用入院主诉', category: '住院病历' },
-  { id: 'physical-exam', name: '体格检查片段', category: '住院病历' },
-  { id: 'nursing-risk', name: '护理风险说明', category: '护理病历' },
-]
-
-const mockElementProperties: ElementProperties = {
-  id: 'none',
-  name: '未选择元素',
-  type: '未选择元素',
-  bindingPath: '-',
-  readonly: false,
-}
+const mockElementProperties = createDefaultElementProperties('none')
 
 let state = createInitialState()
 
@@ -247,11 +228,15 @@ export function resetTemplateWorkbenchState() {
 export async function fetchTemplateWorkbenchData(activeTemplateId?: string): Promise<TemplateWorkbenchData> {
   const activeId = pickActiveTemplateId(activeTemplateId)
   const activeTemplate = state.templates[activeId]
+  const metadata = await fetchMetadataTree()
+  const fragments = await fetchFragmentTemplateTree()
   return {
     templateTree: cloneTree(state.templateTree),
     categories: ['全部分类', ...collectCategories(state.templateTree)],
-    metadataItems: [...mockMetadataItems],
-    fragmentTemplates: [...mockFragmentTemplates],
+    metadataItems: flattenMetadataItems(metadata.tree),
+    metadataTree: metadata.tree,
+    fragmentTemplates: flattenFragmentTemplates(fragments.tree),
+    fragmentTemplateTree: fragments.tree,
     templateProperties: toTemplateProperties(activeTemplate),
     elementProperties: { ...mockElementProperties },
     historyVersions: getTemplateHistoryVersions(activeId),

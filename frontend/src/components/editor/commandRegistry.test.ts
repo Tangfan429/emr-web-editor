@@ -47,6 +47,9 @@ describe('commandRegistry', () => {
       'bold',
       'alignCenter',
       'insertInputField',
+      'insertInputFieldFromInsert',
+      'insertRadioFromInsert',
+      'insertCheckboxFromInsert',
       'insertTable',
       'mergeCell',
     ]))
@@ -68,6 +71,40 @@ describe('commandRegistry', () => {
     expect(findCommandDefinition('cancelUpload')?.kind).toBe('app')
     expect(findCommandDefinition('historyVersions')?.kind).toBe('app')
     expect(createWriterCommandPayload('uploadTemplate')).toBeNull()
+  })
+
+  it('adds phase-three advanced editing entries to the insert menu', () => {
+    const insertTab = topMenuTabs.find(tab => tab.id === 'insert')
+    const insertCommands = insertTab?.groups.flatMap(group => group.commands) || []
+
+    expect(insertCommands.map(command => command.label)).toEqual(expect.arrayContaining([
+      '插入输入域',
+      '插入单选框',
+      '插入复选框',
+      '插入页眉页脚',
+      '另存为页眉页脚',
+      '插入条形码',
+      '插入二维码',
+    ]))
+    expect(findCommandDefinition('insertBarcode')?.kind).toBe('app')
+    expect(findCommandDefinition('insertQrcode')?.kind).toBe('app')
+    expect(findCommandDefinition('insertHeaderFooter')?.kind).toBe('app')
+    expect(findCommandDefinition('saveAsHeaderFooter')?.kind).toBe('app')
+  })
+
+  it('keeps barcode and qrcode as app commands backed by writerElementAdapter', () => {
+    expect(findCommandDefinition('insertBarcode')).toMatchObject({
+      kind: 'app',
+      id: 'insertBarcode',
+      label: '插入条形码',
+    })
+    expect(findCommandDefinition('insertQrcode')).toMatchObject({
+      kind: 'app',
+      id: 'insertQrcode',
+      label: '插入二维码',
+    })
+    expect(createWriterCommandPayload('insertBarcode')).toBeNull()
+    expect(createWriterCommandPayload('insertQrcode')).toBeNull()
   })
 
   it('does not duplicate command ids across menu tabs', () => {

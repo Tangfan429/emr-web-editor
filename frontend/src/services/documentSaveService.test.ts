@@ -136,6 +136,7 @@ describe('documentSaveService', () => {
       ok: false,
       reason: 'backend-failed',
       message: '保存被后端拒绝。',
+      xml: '<document />',
     })
   })
 
@@ -162,6 +163,7 @@ describe('documentSaveService', () => {
       ok: false,
       reason: 'backend-failed',
       message: 'Failed to fetch',
+      xml: '<document />',
     })
   })
 
@@ -188,6 +190,7 @@ describe('documentSaveService', () => {
       ok: false,
       reason: 'backend-failed',
       message: '文档保存失败。',
+      xml: '<document />',
     })
   })
 

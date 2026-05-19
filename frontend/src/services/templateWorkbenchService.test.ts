@@ -34,7 +34,10 @@ describe('templateWorkbenchService', () => {
     expect(data.metadataItems.map(item => item.name)).toEqual(expect.arrayContaining(['患者姓名', '入院日期']))
     expect(data.fragmentTemplates.map(item => item.name)).toEqual(expect.arrayContaining(['通用入院主诉']))
     expect(data.templateProperties.status).toBe('未上传')
-    expect(data.elementProperties.type).toBe('未选择元素')
+    expect(data.elementProperties).toMatchObject({
+      type: 'none',
+      name: '未选择元素',
+    })
   })
 
   it('filters template tree by category and keyword while preserving ancestors', async () => {

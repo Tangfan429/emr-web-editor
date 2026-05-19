@@ -59,9 +59,12 @@ export type WriterEditorCommandId =
   | 'alignCenter'
   | 'alignRight'
   | 'insertInputField'
+  | 'insertInputFieldFromInsert'
   | 'insertDateTime'
   | 'insertCheckbox'
+  | 'insertCheckboxFromInsert'
   | 'insertRadio'
+  | 'insertRadioFromInsert'
   | 'insertPageBreak'
   | 'insertPageInfo'
   | 'insertTable'
@@ -92,6 +95,10 @@ export type AppCommandId =
   | 'zoomIn'
   | 'zoomOut'
   | 'resetZoom'
+  | 'insertBarcode'
+  | 'insertQrcode'
+  | 'insertHeaderFooter'
+  | 'saveAsHeaderFooter'
 
 export type PlaceholderCommandId =
   | 'fontSize'

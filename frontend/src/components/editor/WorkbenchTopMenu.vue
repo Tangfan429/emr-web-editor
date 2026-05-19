@@ -3,6 +3,7 @@ import {
   AlignCenter,
   AlignLeft,
   AlignRight,
+  Barcode,
   Bold,
   CalendarDays,
   CheckSquare,
@@ -20,10 +21,13 @@ import {
   History,
   Italic,
   Merge,
+  PanelTop,
   Printer,
+  QrCode,
   Redo2,
   RotateCcw,
   Save,
+  SaveAll,
   Scissors,
   Settings,
   SplitSquareHorizontal,
@@ -36,7 +40,7 @@ import {
   ZoomIn,
   ZoomOut,
 } from 'lucide-vue-next'
-import { computed, shallowRef, useTemplateRef } from 'vue'
+import { computed, shallowRef } from 'vue'
 import type { Component } from 'vue'
 import type { AppCommandId, EditorCommandId } from '../../types/document'
 import { topMenuTabs, type CommandDefinition } from './commandRegistry'
@@ -62,7 +66,6 @@ const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 const activeMenuId = shallowRef(topMenuTabs[0]?.id || 'file')
-const fileInputRef = useTemplateRef<HTMLInputElement>('fileInput')
 const activeMenu = computed(() => (
   topMenuTabs.find(tab => tab.id === activeMenuId.value) || topMenuTabs[0]
 ))
@@ -71,6 +74,7 @@ const iconMap: Record<string, Component> = {
   AlignCenter,
   AlignLeft,
   AlignRight,
+  Barcode,
   Bold,
   CalendarDays,
   CheckSquare,
@@ -88,10 +92,13 @@ const iconMap: Record<string, Component> = {
   History,
   Italic,
   Merge,
+  PanelTop,
   Printer,
+  QrCode,
   Redo2,
   RotateCcw,
   Save,
+  SaveAll,
   Scissors,
   Settings,
   SplitSquareHorizontal,
@@ -159,13 +166,6 @@ function runCommand(command: CommandDefinition) {
   emit('command', command.id)
 }
 
-function openFilePicker(command: CommandDefinition) {
-  if (isCommandDisabled(command)) {
-    return
-  }
-  fileInputRef.value?.click()
-}
-
 function handleFileChange(event: Event) {
   const input = event.target as HTMLInputElement
   const file = input.files?.[0]
@@ -201,19 +201,23 @@ function handleFileChange(event: Event) {
         class="workbench-menu__group"
       >
         <div class="workbench-menu__commands">
-          <button
+          <label
             v-for="command in fileImportCommands(group.commands)"
             :key="command.id"
             class="workbench-command workbench-command--primary"
-            type="button"
+            :class="{ 'workbench-command--disabled': isCommandDisabled(command) }"
             title="导入本地 XML"
-            :disabled="isCommandDisabled(command)"
-            @mousedown.prevent
-            @click="openFilePicker(command)"
           >
             <component :is="commandIcon(command)" :size="17" aria-hidden="true" />
             <span>{{ command.label }}</span>
-          </button>
+            <input
+              class="workbench-command__file"
+              type="file"
+              accept=".xml,text/xml,application/xml"
+              :disabled="isCommandDisabled(command)"
+              @change="handleFileChange"
+            />
+          </label>
           <button
             v-for="command in buttonCommands(group.commands)"
             :key="command.id"
@@ -230,14 +234,6 @@ function handleFileChange(event: Event) {
         </div>
         <div class="workbench-menu__group-title">{{ group.label }}</div>
       </div>
-      <input
-        ref="fileInput"
-        class="workbench-command__file"
-        type="file"
-        accept=".xml,text/xml,application/xml"
-        :disabled="props.isImporting"
-        @change="handleFileChange"
-      />
     </div>
   </header>
 </template>
@@ -367,10 +363,15 @@ function handleFileChange(event: Event) {
 
 .workbench-command__file {
   position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.workbench-command--disabled .workbench-command__file {
+  cursor: not-allowed;
 }
 
 @media (max-width: 900px) {
